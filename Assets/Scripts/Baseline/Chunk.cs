@@ -52,7 +52,6 @@ public class Chunk
 	public ChunkMB mb;              // The MonoBehaviour of the Chunk
 	BlockData bd;                   // 
 	public bool changed = false;    // If a chunk got modified (e.g. a block got destroyed by the player), set this to true to redraw the chunk upon the next update.
-	bool treesCreated = false;      // 
 
     /// <summary>
     /// Creates a file name for the to be saved or loaded chunk based on its position. On Windows machines the data is saved in AppData\LocalLow\DefaultCompany.
@@ -116,12 +115,12 @@ public class Chunk
 			for(int y = 0; y < World.chunkSize; y++)
 				for(int x = 0; x < World.chunkSize; x++)
 				{
-					if(chunkData[x,y,z].blockType == Block.BlockType.SAND)
-					{
-						mb.StartCoroutine(mb.Drop(chunkData[x,y,z], 
-										Block.BlockType.SAND, 
-										20));
-					}
+					//if(chunkData[x,y,z].blockType == Block.BlockType.SAND)
+					//{
+					//	mb.StartCoroutine(mb.Drop(chunkData[x,y,z], 
+					//					Block.BlockType.SAND, 
+					//					20));
+					//}
 				}
 	}
 
@@ -161,34 +160,30 @@ public class Chunk
                     // Place Diamond, Redstone or Stone at certain heights and probabilities
 					else if(worldY <= Utils.GenerateStoneHeight(worldX,worldZ))
 					{
-						if(Utils.fBM3D(worldX, worldY, worldZ, 0.01f, 2) < 0.4f && worldY < 40)
-							chunkData[x,y,z] = new Block(Block.BlockType.DIAMOND, pos, 
-						                chunk.gameObject, this);
-						else if(Utils.fBM3D(worldX, worldY, worldZ, 0.03f, 3) < 0.41f && worldY < 20)
-							chunkData[x,y,z] = new Block(Block.BlockType.REDSTONE, pos, 
-						                chunk.gameObject, this);
-						else
+						if(Utils.fBM3D(worldX, worldY, worldZ, 0.01f, 2) < 0.4f && worldY < 5)
 							chunkData[x,y,z] = new Block(Block.BlockType.STONE, pos, 
 						                chunk.gameObject, this);
-					}
-                    // Place trunks of a tree or grass blocks on the surface
-					else if(worldY == surfaceHeight)
-					{
-						if(Utils.fBM3D(worldX, worldY, worldZ, 0.4f, 2) < 0.4f)
-							chunkData[x,y,z] = new Block(Block.BlockType.WOODBASE, pos, 
+						else if(Utils.fBM3D(worldX, worldY, worldZ, 0.03f, 3) < 0.41f && worldY < 3)
+							chunkData[x,y,z] = new Block(Block.BlockType.DIRT, pos, 
 						                chunk.gameObject, this);
 						else
-							chunkData[x,y,z] = new Block(Block.BlockType.GRASS, pos, 
+							chunkData[x,y,z] = new Block(Block.BlockType.SAND, pos, 
+						                chunk.gameObject, this);
+					}
+                    // Place grass blocks on the surface
+					else if(worldY == surfaceHeight)
+					{
+						chunkData[x,y,z] = new Block(Block.BlockType.SAND, pos, 
 						                chunk.gameObject, this);
 					}
                     // Place dirt blocks
 					else if(worldY < surfaceHeight)
-						chunkData[x,y,z] = new Block(Block.BlockType.DIRT, pos, 
+						chunkData[x,y,z] = new Block(Block.BlockType.SAND, pos, 
 						                chunk.gameObject, this);
                     // Place water blocks below height 65
-					else if(worldY < 65)
-						chunkData[x,y,z] = new Block(Block.BlockType.WATER, pos, 
-						                fluid.gameObject, this);
+					//else if(worldY < 65)
+					//	chunkData[x,y,z] = new Block(Block.BlockType.WATER, pos, 
+					//	                fluid.gameObject, this);
                     // Place air blocks
 					else
 					{
@@ -197,11 +192,11 @@ public class Chunk
 					}
 
                     // Create caves
-					if(chunkData[x,y,z].blockType != Block.BlockType.WATER && Utils.fBM3D(worldX, worldY, worldZ, 0.1f, 3) < 0.42f)
-						chunkData[x,y,z] = new Block(Block.BlockType.AIR, pos, 
-						                chunk.gameObject, this);
+					//if(chunkData[x,y,z].blockType != Block.BlockType.WATER && Utils.fBM3D(worldX, worldY, worldZ, 0.1f, 3) < 0.42f)
+					//	chunkData[x,y,z] = new Block(Block.BlockType.AIR, pos, 
+					//	                chunk.gameObject, this);
 
-					status = ChunkStatus.DRAW;
+                    status = ChunkStatus.DRAW;
 				}
 	}
 
@@ -225,16 +220,6 @@ public class Chunk
     /// </summary>
 	public void DrawChunk()
 	{
-		if(!treesCreated)
-		{
-			for(int z = 0; z < World.chunkSize; z++)
-				for(int y = 0; y < World.chunkSize; y++)
-					for(int x = 0; x < World.chunkSize; x++)
-					{
-						BuildTrees(chunkData[x,y,z],x,y,z);
-					}
-			treesCreated = true;		
-		}
 		for(int z = 0; z < World.chunkSize; z++)
 			for(int y = 0; y < World.chunkSize; y++)
 				for(int x = 0; x < World.chunkSize; x++)
@@ -251,49 +236,6 @@ public class Chunk
 		CombineQuads(fluid.gameObject, fluidMaterial);
 
 		status = ChunkStatus.DONE;
-	}
-
-    /// <summary>
-    /// Trunks are already place within the BuildChunk method.
-    /// For each trunk, build a tree.
-    /// </summary>
-    /// <param name="trunk">Woodbase block as a trunk of the to be created tree</param>
-    /// <param name="x">x position of the block</param>
-    /// <param name="y">y position of the block</param>
-    /// <param name="z">z position of the block</param>
-	private void BuildTrees(Block trunk, int x, int y, int z)
-	{
-        // Do not build a tree if there is no woodbase
-		if(trunk.blockType != Block.BlockType.WOODBASE) return;
-
-		Block t = trunk.GetBlock(x, y+1, z);
-		if(t != null)
-		{
-			t.SetType(Block.BlockType.WOOD);		
-		    Block t1 = t.GetBlock(x, y+2, z);
-		    if(t1 != null)
-		    {
-			    t1.SetType(Block.BlockType.WOOD);
-
-				for(int i = -1; i <= 1; i++)
-					for(int j = -1; j <= 1; j++)
-						for(int k = 3; k <= 4; k++)
-					{
-						Block t2 = trunk.GetBlock(x+i, y+k, z+j);
-
-						if(t2 != null)
-						{
-							t2.SetType(Block.BlockType.LEAVES);
-						}
-						else return;
-					}
-				Block t3 = t1.GetBlock(x, y+5, z);
-				if(t3 != null)
-				{
-					t3.SetType(Block.BlockType.LEAVES);
-				}
-			}
-		}
 	}
 
     /// <summary>

@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+public enum Cubeside { BOTTOM, TOP, LEFT, RIGHT, FRONT, BACK };
+
 /// <summary>
 /// Block object that represents all possible blocks.
 /// It is in charge of rendering a block as weö as managing its state and appearance.
 /// </summary>
 public class Block
 {
-	enum Cubeside {BOTTOM, TOP, LEFT, RIGHT, FRONT, BACK};
 	public enum BlockType {GRASS, DIRT, WATER, STONE, LEAVES, WOOD, WOODBASE, SAND, GOLD, BEDROCK, REDSTONE, DIAMOND, NOCRACK, 
 							CRACK1, CRACK2, CRACK3, CRACK4, AIR};
 
@@ -126,12 +127,12 @@ public class Block
 										BlockType.WATER, 
 										blockHealthMax[(int)BlockType.WATER],15));
 		}
-		else if(b == BlockType.SAND)
-		{
-			owner.mb.StartCoroutine(owner.mb.Drop(this, 
-										BlockType.SAND, 
-										20));
-		}
+		//else if(b == BlockType.SAND)
+		//{
+		//	owner.mb.StartCoroutine(owner.mb.Drop(this, 
+		//								BlockType.SAND, 
+		//								20));
+		//}
 		else
 		{
 			SetType(b);
