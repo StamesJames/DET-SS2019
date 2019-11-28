@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class SimpleChunk
@@ -13,7 +12,7 @@ public class SimpleChunk
     private int _chunkLength;
     private int _chunkHeight;
     private int _chunkWidth;
-
+    private enum Cubeside { BOTTOM, TOP, LEFT, RIGHT, FRONT, BACK };
     #endregion
 
     #region Constructor
@@ -33,9 +32,8 @@ public class SimpleChunk
                                 position.y * _chunkHeight,
                                 position.z * _chunkWidth);
 
-
         // New GameObject
-        _gameObject = new GameObject(World.BuildChunkName(_position));
+        _gameObject = new GameObject(BuildChunkName(_position));
         _gameObject.transform.position = _position;
         _chunkData = new SimpleBlock[_chunkLength, _chunkHeight, _chunkWidth];
         // Populate chunk data with blocks
@@ -313,6 +311,18 @@ public class SimpleChunk
         {
             GameObject.Destroy(quad.gameObject);
         }
+    }
+
+    /// <summary>
+    /// Creates a name for the chunk based on its position
+    /// </summary>
+    /// <param name="v">Position of tje chunk</param>
+    /// <returns>Returns a string witht he chunk's name</returns>
+    public string BuildChunkName(Vector3 v)
+    {
+        return (int)v.x + "_" +
+                     (int)v.y + "_" +
+                     (int)v.z;
     }
     #endregion
 }
