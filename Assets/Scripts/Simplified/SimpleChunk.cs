@@ -40,6 +40,9 @@ public class SimpleChunk
     #endregion
 
     #region Public Functions
+    /// <summary>
+    /// Draws each block individually at first and then combines all Quads into one mesh in order to start rendering it.
+    /// </summary>
     public void Draw()
     {
         for (int z = 0; z < _chunkWidth; z++)
@@ -51,47 +54,81 @@ public class SimpleChunk
 
         CombineQuads();
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="x">Local position x of the to be returned block</param>
+    /// <param name="y">Local position y of the to be returned block</param>
+    /// <param name="z">Local position z of the to be returned block</param>
+    /// <returns>Returns the requested block</returns>
+    public SimpleBlock GetLocalBlock(int x, int y, int z)
+    {
+        return _chunkData[x, y, z];
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <param name="z"></param>
+    /// <param name="blockType"></param>
+    public void SetLocalBlock(int x, int y, int z, SimpleBlockType blockType)
+    {
+        _chunkData[x, y, z].blockType = blockType;
+    }
     #endregion
 
     #region Private Functions
+    /// <summary>
+    /// Creates Quads for the specified block.
+    /// </summary>
+    /// <param name="block">The to be drawn block by creating its Quads.</param>
     private void DrawBlock(SimpleBlock block)
     {
         // Create Quads
+        // Don't draw Quads for blocks of type air
         if(block.blockType != SimpleBlockType.AIR)
         {
-            // Solid or same neighbour
-            //if (!HasSolidNeighbour((int)block.position.x, (int)block.position.y, (int)block.position.z + 1))
+            // Convert current local block position to global by adding the chunk's position
+            Vector3 globalBlockPosition = new Vector3(_position.x  + block.position.x,
+                                          _position.y + block.position.y,
+                                          _position.z + block.position.z);
+            // Create Quads only in the case of having no neighoring block or no solid block
+            if (!HasSolidNeighbor((int)globalBlockPosition.x, (int)globalBlockPosition.y, (int)globalBlockPosition.z + 1))
                 CreateQuad(Cubeside.FRONT, block.position, block.blockType);
-            //if (!HasSolidNeighbour((int)block.position.x, (int)block.position.y, (int)block.position.z - 1))
+            if (!HasSolidNeighbor((int)globalBlockPosition.x, (int)globalBlockPosition.y, (int)globalBlockPosition.z - 1))
                 CreateQuad(Cubeside.BACK, block.position, block.blockType);
-            //if (!HasSolidNeighbour((int)block.position.x, (int)block.position.y + 1, (int)block.position.z))
+            if (!HasSolidNeighbor((int)globalBlockPosition.x, (int)globalBlockPosition.y + 1, (int)globalBlockPosition.z))
                 CreateQuad(Cubeside.TOP, block.position, block.blockType);
-            //if (!HasSolidNeighbour((int)block.position.x, (int)block.position.y - 1, (int)block.position.z))
+            if (!HasSolidNeighbor((int)globalBlockPosition.x, (int)globalBlockPosition.y - 1, (int)globalBlockPosition.z))
                 CreateQuad(Cubeside.BOTTOM, block.position, block.blockType);
-            //if (!HasSolidNeighbour((int)block.position.x - 1, (int)block.position.y, (int)block.position.z))
-                CreateQuad(Cubeside.LEFT, block.position, block.blockType);
-            //if (!HasSolidNeighbour((int)block.position.x + 1, (int)block.position.y, (int)block.position.z))
+            if (!HasSolidNeighbor((int)globalBlockPosition.x + 1, (int)globalBlockPosition.y, (int)globalBlockPosition.z))
                 CreateQuad(Cubeside.RIGHT, block.position, block.blockType);
+            if (!HasSolidNeighbor((int)globalBlockPosition.x - 1, (int)globalBlockPosition.y, (int)globalBlockPosition.z))
+                CreateQuad(Cubeside.LEFT, block.position, block.blockType);
         }
     }
 
     /// <summary>
-    /// Tests whether the specificed block is solid or not solid.
+    /// Searches for the specified block in the world and returns true if it is solid.
     /// </summary>
-    /// <param name="x">x position of the block</param>
-    /// <param name="y">y position of the block</param>
-    /// <param name="z">z position of the block</param>
-    /// <returns>Returns true if the specified block is solid</returns>
-    private bool HasSolidNeighbour(int x, int y, int z)
+    /// <param name="x">Global x position of the to be checked block</param>
+    /// <param name="y">Global y position of the to be checked block</param>
+    /// <param name="z">Global z position of the to be checked block</param>
+    /// <returns>Returns true if a block was found which is not of type air.</returns>
+    private bool HasSolidNeighbor(int x, int y, int z)
     {
-        //try
-        //{
-        //    Block b = GetBlock(x, y, z);
-        //    if (b != null)
-        //        return (b.isSolid || b.blockType == blockType);
-        //}
-        //catch (System.IndexOutOfRangeException) { }
-        //
+        try
+        {
+            SimpleBlock neighborBlock = SimpleWorld.Instance.GetBlock(x, y, z);
+            if (neighborBlock != null)
+            {
+                return neighborBlock.blockType != SimpleBlockType.AIR;
+            }
+        }
+        catch (System.IndexOutOfRangeException) { }
         return false;
     }
 
@@ -99,6 +136,8 @@ public class SimpleChunk
     /// Assembles one side of a cube's mesh by selecting the UVs, defining the vertices and calculating the normals.
     /// </summary>
     /// <param name="side">Quad to be created for this side</param>
+    /// <param name="position">Local position of the block</param>
+    /// <param name="blockType">Block type</param>
 	private void CreateQuad(Cubeside side, Vector3 position, SimpleBlockType blockType)
     {
         Mesh mesh = new Mesh();
@@ -212,6 +251,9 @@ public class SimpleChunk
         meshFilter.mesh = mesh;
     }
 
+    /// <summary>
+    /// Combines all Quads into one Mesh and creates all components to get started rendering.
+    /// </summary>
     private void CombineQuads()
     {
         // 1. Combine all children meshes
@@ -242,6 +284,5 @@ public class SimpleChunk
             GameObject.Destroy(quad.gameObject);
         }
     }
-
     #endregion
 }

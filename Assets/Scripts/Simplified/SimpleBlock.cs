@@ -24,7 +24,7 @@ public static class SimpleBlockUVs
     };
 }
 
-public struct SimpleBlock
+public class SimpleBlock
 {
     #region Member Fields
     public SimpleBlockType blockType;
