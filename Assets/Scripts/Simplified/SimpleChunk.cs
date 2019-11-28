@@ -5,6 +5,7 @@ using UnityEngine;
 public class SimpleChunk
 {
     #region Member Fields
+    private SimpleWorld _world;
     private SimpleBlock[,,] _chunkData;
     private Material _blockMaterial;
     private Vector3 _position;
@@ -12,18 +13,26 @@ public class SimpleChunk
     private int _chunkLength;
     private int _chunkHeight;
     private int _chunkWidth;
+
     #endregion
 
     #region Constructor
-    public SimpleChunk(Vector3 position, int chunkLength, int chunkHeight, int chunkWidth, Material blockMaterial)
+    /// <summary>
+    /// Initializes a chunk and populates the block data.
+    /// </summary>
+    /// <param name="position">Position of the chunk</param>
+    /// <param name="blockMaterial">The to be used material</param>
+    public SimpleChunk(Vector3 position, Material blockMaterial)
     {
+        _world = SimpleWorld.Instance;
+        _chunkLength = (int)_world.ChunkDim.x;
+        _chunkHeight = (int)_world.ChunkDim.y;
+        _chunkWidth = (int)_world.ChunkDim.z;
         _blockMaterial = blockMaterial;
-        _position = new Vector3(position.x * chunkLength,
-                                position.y * chunkHeight,
-                                position.z * chunkWidth);
-        _chunkLength = chunkLength;
-        _chunkHeight = chunkHeight;
-        _chunkWidth = chunkWidth;
+        _position = new Vector3(position.x * _chunkLength,
+                                position.y * _chunkHeight,
+                                position.z * _chunkWidth);
+
 
         // New GameObject
         _gameObject = new GameObject(World.BuildChunkName(_position));
@@ -34,7 +43,23 @@ public class SimpleChunk
             for (int y = 0; y < _chunkHeight; y++)
                 for (int x = 0; x < _chunkLength; x++)
                 {
-                    _chunkData[x, y, z] = new SimpleBlock(SimpleBlockType.DIRT, this, _gameObject, new Vector3(x,y,z));
+                    if (y + (int)_position.y < _world.SurfaceHeight)
+                    {
+                        _chunkData[x, y, z] = new SimpleBlock(SimpleBlockType.DIRT, this, _gameObject, new Vector3(x, y, z));
+                    }
+                    else if (y + (int)_position.y == _world.SurfaceHeight)
+                    {
+                        _chunkData[x, y, z] = new SimpleBlock(SimpleBlockType.GRASS, this, _gameObject, new Vector3(x, y, z));
+                    }
+                    else
+                    {
+                        _chunkData[x, y, z] = new SimpleBlock(SimpleBlockType.AIR, this, _gameObject, new Vector3(x, y, z));
+                    }
+
+                    if (y + (int)_position.y == 0)
+                    {
+                        _chunkData[x, y, z] = new SimpleBlock(SimpleBlockType.BEDROCK, this, _gameObject, new Vector3(x, y, z));
+                    }
                 }
     }
     #endregion
@@ -52,7 +77,12 @@ public class SimpleChunk
                     DrawBlock(_chunkData[x, y, z]);
                 }
 
+        // Combine Mesh
         CombineQuads();
+
+        // Add Meshcollider
+        MeshCollider collider = _gameObject.AddComponent(typeof(MeshCollider)) as MeshCollider;
+        collider.sharedMesh = _gameObject.transform.GetComponent<MeshFilter>().mesh;
     }
 
     /// <summary>
@@ -268,14 +298,14 @@ public class SimpleChunk
         }
 
         // 2. Create a new mesh on the parent object
-        MeshFilter mf = (MeshFilter)_gameObject.gameObject.AddComponent(typeof(MeshFilter));
+        MeshFilter mf = (MeshFilter)_gameObject.AddComponent(typeof(MeshFilter));
         mf.mesh = new Mesh();
 
         // 3. Add combined meshes on children as the parent's mesh
         mf.mesh.CombineMeshes(combine);
 
         // 4. Create a renderer for the parent
-        MeshRenderer renderer = _gameObject.gameObject.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
+        MeshRenderer renderer = _gameObject.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
         renderer.material = _blockMaterial;
 
         // 5. Delete all uncombined children
