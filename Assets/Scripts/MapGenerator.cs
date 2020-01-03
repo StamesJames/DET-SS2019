@@ -4,10 +4,10 @@ using UnityEngine;
 
 public abstract class MapGenerator
 {
-    private Block.BlockType[,,] currentBlockMap;
+    protected Block.BlockType[,,] currentBlockMap;
     public Block.BlockType[,,] CurrentBlockMap { get => currentBlockMap; }
 
-    private int xChunkCount, yChunkCount, zChunkCount;
+    protected int xChunkCount, yChunkCount, zChunkCount;
     public int XChunkCount { get => xChunkCount; set => xChunkCount = value; }
     public int YChunkCount { get => yChunkCount; set => yChunkCount = value; }
     public int ZChunkCount { get => zChunkCount; set => zChunkCount = value; }

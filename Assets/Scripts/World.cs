@@ -27,12 +27,10 @@ public class World : MonoBehaviour
 	public Vector3 lastbuildPos;
 
     private MapGenerator mapGenerator;
+    public MapGenerator MapGenerator { get => mapGenerator; set => mapGenerator = value; }
 
     /// <summary>
     /// Builds the current Map in the Mapgenerator;
-    /// </summary>
-    /// <param name="v">Position of tje chunk</param>
-    /// <returns>Returns a string witht he chunk's name</returns>
     public void BuildMap()
     {
         Block.BlockType[,,] blockMap = mapGenerator.GenerateMap();
@@ -257,13 +255,14 @@ public class World : MonoBehaviour
     /// </summary>
 	void Start ()
     {
+        /*
 		Vector3 ppos = player.transform.position;
 		player.transform.position = new Vector3(ppos.x,
 											Utils.GenerateHeight(ppos.x,ppos.z) + 1,
 											ppos.z);
 		lastbuildPos = player.transform.position;
 		player.SetActive(false);
-
+        */
 		firstbuild = true;
 		chunks = new ConcurrentDictionary<string, Chunk>();
 		this.transform.position = Vector3.zero;
@@ -272,16 +271,19 @@ public class World : MonoBehaviour
 		queue = new CoroutineQueue(maxCoroutines, StartCoroutine);
 
 		// Build starting chunk
-		BuildChunkAt((int)(player.transform.position.x/chunkSize),
-											(int)(player.transform.position.y/chunkSize),
-											(int)(player.transform.position.z/chunkSize));
+		//BuildChunkAt((int)(player.transform.position.x/chunkSize),
+		//									(int)(player.transform.position.y/chunkSize),
+		//									(int)(player.transform.position.z/chunkSize));
 		// Draw starting chunk
-		queue.Run(DrawChunks());
 
 		// Create further chunks
-		queue.Run(BuildRecursiveWorld((int)(player.transform.position.x/chunkSize),
-											(int)(player.transform.position.y/chunkSize),
-											(int)(player.transform.position.z/chunkSize),radius,radius));
+		//queue.Run(BuildRecursiveWorld((int)(this.transform.position.x/chunkSize),
+		//									(int)(this.transform.position.y/chunkSize),
+		//									(int)(this.transform.position.z/chunkSize),radius,radius));
+
+        mapGenerator = new TestMap();
+        BuildMap();
+		queue.Run(DrawChunks());
 	}
 	
     /// <summary>
@@ -290,6 +292,7 @@ public class World : MonoBehaviour
 	void Update ()
     {
         // Determine whether to build/load more chunks around the player's location
+        /*
 		Vector3 movement = lastbuildPos - player.transform.position;
 
 		if(movement.magnitude > chunkSize )
@@ -304,7 +307,7 @@ public class World : MonoBehaviour
 			player.SetActive(true);	
 			firstbuild = false;
 		}
-
+        */
         // Draw new chunks and removed deprecated chunks
 		queue.Run(DrawChunks());
 		queue.Run(RemoveOldChunks());

@@ -208,10 +208,6 @@ public class Chunk
 
     private void BuildChunk(Block.BlockType[,,] blockMap)
     {
-        bool dataFromFile = false;
-        // Commented load functionality, because this may cause issues while changing the underlying code (saved files may not represent the current state of the project)
-        //dataFromFile = Load();
-
         chunkData = new Block[World.chunkSize, World.chunkSize, World.chunkSize];
         for (int z = 0; z < World.chunkSize; z++)
             for (int y = 0; y < World.chunkSize; y++)
@@ -222,22 +218,9 @@ public class Chunk
                     int worldY = (int)(y + chunk.transform.position.y);
                     int worldZ = (int)(z + chunk.transform.position.z);
 
-                    // Load chunk from file
-                    if (dataFromFile)
-                    {
-                        chunkData[x, y, z] = new Block(bd.matrix[x, y, z], pos,
-                                        chunk.gameObject, this);
-                        continue;
-                    }
-
                     int surfaceHeight = Utils.GenerateHeight(worldX, worldZ);
 
                     chunkData[x,y,z] = new Block(blockMap[x,y,z], pos,
-                                        chunk.gameObject, this);
-
-                    // Create caves
-                    if (chunkData[x, y, z].blockType != Block.BlockType.WATER && Utils.fBM3D(worldX, worldY, worldZ, 0.1f, 3) < 0.42f)
-                        chunkData[x, y, z] = new Block(Block.BlockType.AIR, pos,
                                         chunk.gameObject, this);
 
                     status = ChunkStatus.DRAW;
