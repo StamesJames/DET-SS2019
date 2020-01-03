@@ -310,6 +310,6 @@ public class World : MonoBehaviour
         */
         // Draw new chunks and removed deprecated chunks
 		queue.Run(DrawChunks());
-		queue.Run(RemoveOldChunks());
+		//queue.Run(RemoveOldChunks());
 	}
 }
