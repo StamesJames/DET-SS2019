@@ -205,6 +205,46 @@ public class Chunk
 				}
 	}
 
+
+    private void BuildChunk(Block.BlockType[,,] blockMap)
+    {
+        bool dataFromFile = false;
+        // Commented load functionality, because this may cause issues while changing the underlying code (saved files may not represent the current state of the project)
+        //dataFromFile = Load();
+
+        chunkData = new Block[World.chunkSize, World.chunkSize, World.chunkSize];
+        for (int z = 0; z < World.chunkSize; z++)
+            for (int y = 0; y < World.chunkSize; y++)
+                for (int x = 0; x < World.chunkSize; x++)
+                {
+                    Vector3 pos = new Vector3(x, y, z);
+                    int worldX = (int)(x + chunk.transform.position.x);
+                    int worldY = (int)(y + chunk.transform.position.y);
+                    int worldZ = (int)(z + chunk.transform.position.z);
+
+                    // Load chunk from file
+                    if (dataFromFile)
+                    {
+                        chunkData[x, y, z] = new Block(bd.matrix[x, y, z], pos,
+                                        chunk.gameObject, this);
+                        continue;
+                    }
+
+                    int surfaceHeight = Utils.GenerateHeight(worldX, worldZ);
+
+                    chunkData[x,y,z] = new Block(blockMap[x,y,z], pos,
+                                        chunk.gameObject, this);
+
+                    // Create caves
+                    if (chunkData[x, y, z].blockType != Block.BlockType.WATER && Utils.fBM3D(worldX, worldY, worldZ, 0.1f, 3) < 0.42f)
+                        chunkData[x, y, z] = new Block(Block.BlockType.AIR, pos,
+                                        chunk.gameObject, this);
+
+                    status = ChunkStatus.DRAW;
+                }
+    }
+
+
     /// <summary>
     /// Redraws this chunk by destroying all mesh and collision components and then creating new ones.
     /// </summary>
@@ -321,8 +361,29 @@ public class Chunk
 		fluidMaterial = t;
 		BuildChunk();                                                   // Start building the chunk
 	}
-	
-	public void CombineQuads(GameObject o, Material m)
+
+    /// <summary>
+    /// Initializes a chunk by providing a position, a material for blocks and a material for partially transparent blocks.
+    /// </summary>
+    /// <param name="position">Position of the chunk</param>
+    /// <param name="c">The material for the solid blocks of the chunk</param>
+    /// <param name="t">The material for the transparent blocks of the chunk</param>
+    public Chunk(Vector3 position, Material c, Material t, Block.BlockType[,,] blockMap )
+    {
+        // Create GameObjects holding the chunk's meshes
+        chunk = new GameObject(World.BuildChunkName(position));         // solid chunk mesh, e.g. dirt blocks
+        chunk.transform.position = position;
+        fluid = new GameObject(World.BuildChunkName(position) + "_F");    // transparent chunk mesh, e.g. water blocks
+        fluid.transform.position = position;
+
+        mb = chunk.AddComponent<ChunkMB>();                             // Adds the chunk's Monobehaviour
+        mb.SetOwner(this);
+        cubeMaterial = c;
+        fluidMaterial = t;
+        BuildChunk(blockMap);                                                   // Start building the chunk
+    }
+
+    public void CombineQuads(GameObject o, Material m)
 	{
 		// 1. Combine all children meshes
 		MeshFilter[] meshFilters = o.GetComponentsInChildren<MeshFilter>();

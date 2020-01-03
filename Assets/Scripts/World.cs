@@ -110,6 +110,24 @@ public class World : MonoBehaviour
 		}
 	}
 
+    private void BuildChunkAt(int x, int y, int z, Block.BlockType[,,] blockMap)
+    {
+        Vector3 chunkPosition = new Vector3(x * chunkSize,
+                                            y * chunkSize,
+                                            z * chunkSize);
+
+        string n = BuildChunkName(chunkPosition);
+        Chunk c;
+
+        if (!chunks.TryGetValue(n, out c))
+        {
+            c = new Chunk(chunkPosition, textureAtlas, fluidTexture, blockMap);
+            c.chunk.transform.parent = this.transform;
+            c.fluid.transform.parent = this.transform;
+            chunks.TryAdd(c.chunk.name, c);
+        }
+    }
+
     /// <summary>
     /// Coroutine to to recursively build chunks of the world depending on some location and a radius.
     /// </summary>
