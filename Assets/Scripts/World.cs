@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Realtime.Messaging.Internal;
+using System.Linq;
 
 /// <summary>
 /// The world MonoBehavior is in charge of creating, updating and destroying chunks based on the player's location.
@@ -24,6 +25,31 @@ public class World : MonoBehaviour
 	public static CoroutineQueue queue;
 
 	public Vector3 lastbuildPos;
+
+    private MapGenerator mapGenerator;
+
+    /// <summary>
+    /// Builds the current Map in the Mapgenerator;
+    /// </summary>
+    /// <param name="v">Position of tje chunk</param>
+    /// <returns>Returns a string witht he chunk's name</returns>
+    public void BuildMap()
+    {
+        Block.BlockType[,,] blockMap = mapGenerator.GenerateMap();
+        Block.BlockType[,,] newChunkMap = new Block.BlockType[World.chunkSize, World.chunkSize, World.chunkSize];
+        for (int xc = 0; xc < mapGenerator.XChunkCount; xc++)
+            for (int yc = 0; yc < mapGenerator.YChunkCount; yc++)
+                for (int zc = 0; zc < mapGenerator.ZChunkCount; zc++)
+                {
+                    for (int x = 0; x < World.chunkSize; x++)
+                        for (int y = 0; y < World.chunkSize; y++)
+                            for (int z = 0; z < World.chunkSize; z++)
+                            {
+                                newChunkMap[x, y, z] = blockMap[xc * World.chunkSize + x, yc * World.chunkSize + y, zc * World.chunkSize + z];
+                            }
+                    BuildChunkAt(xc, yc, zc, newChunkMap);
+                }
+    }
 
     /// <summary>
     /// Creates a name for the chunk based on its position
