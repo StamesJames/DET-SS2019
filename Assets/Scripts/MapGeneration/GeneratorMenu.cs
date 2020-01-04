@@ -10,6 +10,8 @@ public class GeneratorMenu : MonoBehaviour
     [SerializeField] private MapGeneratorHolder[] holders;
     [SerializeField] private World world;
 
+    private MapGeneratorHolder currenHolder;
+
 
     private void Start()
     {
@@ -21,11 +23,13 @@ public class GeneratorMenu : MonoBehaviour
         }
         generatorTMP.AddOptions(options);
         world.MapGenerator = holders[0].GetGenerator();
+        currenHolder = holders[0];
     }
 
     public void ChangeWorldGenerator(TMP_Dropdown change)
     {
         world.MapGenerator = holders[change.value].GetGenerator();
+        currenHolder = holders[change.value];
         Debug.Log("Changed to " + holders[change.value].Holdername);
     }
 }

@@ -42,6 +42,7 @@ public class World : MonoBehaviour
     /// Builds the current Map in the Mapgenerator;
     public void BuildMap()
     {
+        DestroyWorld();
         Block.BlockType[,,] blockMap = mapGenerator.GenerateMap();
         Block.BlockType[,,] newChunkMap = new Block.BlockType[World.chunkSize, World.chunkSize, World.chunkSize];
         for (int xc = 0; xc < mapGenerator.XChunkCount; xc++)
