@@ -290,7 +290,6 @@ public class World : MonoBehaviour
 		//queue.Run(BuildRecursiveWorld((int)(this.transform.position.x/chunkSize),
 		//									(int)(this.transform.position.y/chunkSize),
 		//									(int)(this.transform.position.z/chunkSize),radius,radius));
-
 		queue.Run(DrawChunks());
 	}
 	
