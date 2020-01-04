@@ -281,7 +281,7 @@ public class World : MonoBehaviour
 		//									(int)(this.transform.position.y/chunkSize),
 		//									(int)(this.transform.position.z/chunkSize),radius,radius));
 
-        mapGenerator = new TestMap();
+        mapGenerator = new FlatCaveMap();
         BuildMap();
 		queue.Run(DrawChunks());
 	}
