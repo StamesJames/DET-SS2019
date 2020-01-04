@@ -29,10 +29,20 @@ public class World : MonoBehaviour
     private MapGenerator mapGenerator;
     public MapGenerator MapGenerator { get => mapGenerator; set => mapGenerator = value; }
 
+    public void DestroyWorld()
+    {
+        foreach (KeyValuePair<string, Chunk> chunk in chunks)
+        {
+            chunk.Value.Destroy();
+        }
+        chunks.Clear();
+    }
+
     /// <summary>
     /// Builds the current Map in the Mapgenerator;
     public void BuildMap()
     {
+        DestroyWorld();
         Block.BlockType[,,] blockMap = mapGenerator.GenerateMap();
         Block.BlockType[,,] newChunkMap = new Block.BlockType[World.chunkSize, World.chunkSize, World.chunkSize];
         for (int xc = 0; xc < mapGenerator.XChunkCount; xc++)
@@ -280,9 +290,6 @@ public class World : MonoBehaviour
 		//queue.Run(BuildRecursiveWorld((int)(this.transform.position.x/chunkSize),
 		//									(int)(this.transform.position.y/chunkSize),
 		//									(int)(this.transform.position.z/chunkSize),radius,radius));
-
-        mapGenerator = new FlatCaveMap();
-        BuildMap();
 		queue.Run(DrawChunks());
 	}
 	
