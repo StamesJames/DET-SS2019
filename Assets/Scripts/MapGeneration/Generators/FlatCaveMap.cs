@@ -39,6 +39,8 @@ public class FlatCaveMap : MapGenerator
                     currentBlockMap[x, y, z] = flatMap[x, y];
                 }
 
+        CreaterBottomCeling();
+        
         return currentBlockMap;
     }
 
@@ -115,22 +117,61 @@ public class FlatCaveMap : MapGenerator
         for (int i = 0; i < xChunkCount * World.chunkSize; i++)
             for (int j = 0; j < yChunkCount * World.chunkSize; j++)
                 for (int k = 0; k < zChunkCount * World.chunkSize; k++){
-                    currentBlockMap[i, 1, j] = Block.BlockType.DIAMOND;
-                    currentBlockMap[i, 2, j] = Block.BlockType.DIAMOND;
-
+                    currentBlockMap[i, j, zChunkCount*World.chunkSize-1] = Block.BlockType.STONE;
                 }
             
-        
-        for (int i = xChunkCount * World.chunkSize / 2; i>1; i--)
-            for (int j = 0; j < yChunkCount * World.chunkSize; j++)
-                for (int k = 0; k < zChunkCount * World.chunkSize; k++){
-                    if(currentBlockMap[j, i, k]==Block.BlockType.DIAMOND)
+        for (int i = 1; i < xChunkCount * World.chunkSize-1; i++)
+            for (int j = 1; j < yChunkCount * World.chunkSize-1; j++)
+                for (int k = zChunkCount*World.chunkSize-2; k > 1; k--){
+                    if(getNeighbours(i,j,k)>=12)
                     {
-                        currentBlockMap[j,i-1,k] = Block.BlockType.DIRT;
+                        currentBlockMap[i,j,k] = Block.BlockType.STONE;
                     }
                 }
-            
+    }
+    int getNeighbours(int i,int j,int k){
+        int neighbourcount = 0;
+        if(currentBlockMap[i-1,j-1,k-1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i-1,j,k]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i-1,j+1,k-1]==Block.BlockType.STONE)neighbourcount++; 
+
+        if(currentBlockMap[i,j-1,k-1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i,j,k-1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i,j+1,k-1]==Block.BlockType.STONE)neighbourcount++;
+
+        if(currentBlockMap[i+1,j-1,k-1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i+1,j,k-1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i+1,j+1,k-1]==Block.BlockType.STONE)neighbourcount++;
+
+        //-----------------------------------------------------------------------
+
+        if(currentBlockMap[i-1,j-1,k]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i-1,j,k]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i-1,j+1,k]==Block.BlockType.STONE)neighbourcount++; 
+
+        if(currentBlockMap[i,j-1,k]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i,j+1,k]==Block.BlockType.STONE)neighbourcount++;
+
+        if(currentBlockMap[i+1,j-1,k]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i+1,j,k]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i+1,j+1,k]==Block.BlockType.STONE)neighbourcount++;
         
+        //-----------------------------------------------------------------------
+        
+        if(currentBlockMap[i-1,j-1,k+1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i-1,j,k+1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i-1,j+1,k+1]==Block.BlockType.STONE)neighbourcount++; 
+
+        if(currentBlockMap[i,j-1,k+1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i,j,k+1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i,j+1,k+1]==Block.BlockType.STONE)neighbourcount++;
+
+        if(currentBlockMap[i+1,j-1,k+1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i+1,j,k+1]==Block.BlockType.STONE)neighbourcount++;
+        if(currentBlockMap[i+1,j+1,k+1]==Block.BlockType.STONE)neighbourcount++;
+
+
+        return neighbourcount;
     }
 
 }
