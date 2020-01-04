@@ -54,6 +54,13 @@ public class Chunk
 	public bool changed = false;    // If a chunk got modified (e.g. a block got destroyed by the player), set this to true to redraw the chunk upon the next update.
 	bool treesCreated = false;      // 
 
+    public void Destroy()
+    {
+        GameObject.Destroy(chunk);
+        GameObject.Destroy(fluid);
+    }
+
+
     /// <summary>
     /// Creates a file name for the to be saved or loaded chunk based on its position. On Windows machines the data is saved in AppData\LocalLow\DefaultCompany.
     /// </summary>
