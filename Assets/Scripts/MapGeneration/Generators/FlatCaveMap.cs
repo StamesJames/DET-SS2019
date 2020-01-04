@@ -7,9 +7,11 @@ public class FlatCaveMap : MapGenerator
     private Block.BlockType[,] flatMap;
 
     [SerializeField] private int randomFillPercent = 40;
+    public int RandomFillPercent { get => randomFillPercent; set => randomFillPercent = value; }
     [SerializeField] private int smoothingItterations = 3;
+    public int SmoothingItterations { get => smoothingItterations; set => smoothingItterations = value; }
     [SerializeField] private Intervall[] birthIntervalls;
-    [SerializeField] private Intervall[] deathIntervalls; 
+    [SerializeField] private Intervall[] deathIntervalls;
 
 
     public FlatCaveMap()
@@ -28,7 +30,7 @@ public class FlatCaveMap : MapGenerator
         currentBlockMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
         RandomFillMap();
 
-        for (int i = 0; i < 1; i++) SmoothMap();
+        for (int i = 0; i < smoothingItterations; i++) SmoothMap();
 
         for (int x = 0; x < xChunkCount * World.chunkSize; x++)
             for (int y = 0; y < yChunkCount * World.chunkSize; y++)
@@ -36,7 +38,6 @@ public class FlatCaveMap : MapGenerator
                 {
                     currentBlockMap[x, y, z] = flatMap[x, y];
                 }
-        CreaterBottomCeling();
 
         return currentBlockMap;
     }

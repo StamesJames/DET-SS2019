@@ -9,5 +9,5 @@ public abstract class MapGeneratorHolder : MonoBehaviour
 
     public abstract MapGenerator GetGenerator();
 
-    public abstract void UpdateChunkCountSize();
+    public abstract void UpdateValues();
 }
