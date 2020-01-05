@@ -10,24 +10,17 @@ public class TestMap : MapGenerator
         xChunkCount = 1;
         yChunkCount = 1;
         zChunkCount = 1;
-        currentBlockMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
-        for (int i = 0; i < World.chunkSize * xChunkCount; i++)
-            for (int j = 0; j < World.chunkSize * yChunkCount; j++)
-                for (int k = 0; k < World.chunkSize * zChunkCount; k++)
-                {
-                    currentBlockMap[i, j, k] = Block.BlockType.DIAMOND;
-                }
+        GenerateMap();
     }
 
     public override Block.BlockType[,,] GenerateMap()
     {
-        Debug.Log("ChunkCount " + "X: " + xChunkCount + " Y:" + yChunkCount + " Z:" + zChunkCount);
         currentBlockMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
         for (int i = 0; i < World.chunkSize * xChunkCount; i++)
             for (int j = 0; j < World.chunkSize * yChunkCount; j++)
                 for (int k = 0; k < World.chunkSize * zChunkCount; k++)
                 {
-                    currentBlockMap[i, j, k] = Block.BlockType.DIAMOND;
+                    currentBlockMap[i, j, k] = Block.BlockType.WOOD;
                 }
         return currentBlockMap;
     }
