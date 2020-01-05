@@ -26,7 +26,7 @@ public class FlatCaveMap : MapGenerator
 
     public override Block.BlockType[,,] GenerateMap()
     {
-        flatMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize];
+        flatMap = new Block.BlockType[xChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
         currentBlockMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
         RandomFillMap();
 
@@ -36,7 +36,7 @@ public class FlatCaveMap : MapGenerator
             for (int y = 0; y < yChunkCount * World.chunkSize; y++)
                 for (int z = 0; z < zChunkCount * World.chunkSize; z++)
                 {
-                    currentBlockMap[x, y, z] = flatMap[x, y];
+                    currentBlockMap[x, y, z] = flatMap[x, z];
                 }
 
         CreateBottom();
@@ -52,33 +52,33 @@ public class FlatCaveMap : MapGenerator
     {
         System.Random pseudoRandom = new System.Random();       
         for (int x = 0; x < xChunkCount * World.chunkSize; x++)
-            for (int y = 0; y < yChunkCount * World.chunkSize; y++)
+            for (int z = 0; z < zChunkCount * World.chunkSize; z++)
             {
-                if (x == 0 || x == xChunkCount * World.chunkSize - 1 || y == 0 || y == yChunkCount * World.chunkSize - 1)
+                if (x == 0 || x == xChunkCount * World.chunkSize - 1 || z == 0 || z == zChunkCount * World.chunkSize - 1)
                 {
-                    flatMap[x, y] = Block.BlockType.STONE;
+                    flatMap[x, z] = Block.BlockType.STONE;
                 }
                 else
                 {
-                    flatMap[x, y] = (pseudoRandom.Next(1,100) < randomFillPercent) ? Block.BlockType.STONE : Block.BlockType.AIR;
+                    flatMap[x, z] = (pseudoRandom.Next(1,100) < randomFillPercent) ? Block.BlockType.STONE : Block.BlockType.AIR;
                 }
             }       
     }
 
     void SmoothMap() {
-        Block.BlockType[,] newFlatMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize];
+        Block.BlockType[,] newFlatMap = new Block.BlockType[xChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
 		for (int x = 0; x < xChunkCount * World.chunkSize; x ++)
-			for (int y = 0; y < yChunkCount * World.chunkSize; y ++)
+			for (int z = 0; z < zChunkCount * World.chunkSize; z ++)
             {
-				int neighboreCount = CountSurroundingBlocks(x,y,Block.BlockType.STONE,flatMap,1);
-                newFlatMap[x, y] = flatMap[x, y];
-                if (flatMap[x,y] == Block.BlockType.STONE)
+				int neighboreCount = CountSurroundingBlocks(x,z,Block.BlockType.STONE,flatMap,1);
+                newFlatMap[x, z] = flatMap[x, z];
+                if (flatMap[x,z] == Block.BlockType.STONE)
                 {
                     foreach (Intervall deathIntervall in deathIntervalls)
                     {
                         if (deathIntervall.Contains(neighboreCount))
                         {
-                            newFlatMap[x, y] = Block.BlockType.AIR;
+                            newFlatMap[x, z] = Block.BlockType.AIR;
                         }
                     }
                 }
@@ -88,7 +88,7 @@ public class FlatCaveMap : MapGenerator
                     {
                         if (birthIntervall.Contains(neighboreCount))
                         {
-                            newFlatMap[x, y] = Block.BlockType.STONE;
+                            newFlatMap[x, z] = Block.BlockType.STONE;
                         }
                     }
                 }
@@ -96,17 +96,43 @@ public class FlatCaveMap : MapGenerator
         flatMap = newFlatMap;
 	}
 
-    int CountSurroundingBlocks(int gridX, int gridY, Block.BlockType blockType, Block.BlockType[,] map, int distance) 
+    void CreaterBottomCeling(){
+        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+            for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                {
+                    currentBlockMap[x, yChunkCount * World.chunkSize - 1, z] = Block.BlockType.STONE;
+                }
+        Block.BlockType[,] neueEbene = new Block.BlockType[xChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
+
+        for (int y = yChunkCount * World.chunkSize - 2; y > 0; y--)
+        {
+            for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                {
+                    neueEbene[x, z] = currentBlockMap[x,y,z] == Block.BlockType.STONE ||
+                        CountSurroundingBlocks(x, y, z, Block.BlockType.STONE, currentBlockMap, 1) >= 14 ? Block.BlockType.STONE : Block.BlockType.AIR;                        
+                }
+
+            for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                {
+                    currentBlockMap[x, y, z] = neueEbene[x, z];
+                    Debug.Log( ( (currentBlockMap[x, y, z] == neueEbene[x, z]) ? "IST GLEICH" : "NICHT GLEICH" ));
+                }
+        }
+    }
+
+    int CountSurroundingBlocks(int gridX, int gridZ, Block.BlockType blockType, Block.BlockType[,] map, int distance, bool negative = false)
     {
         int blockCount = 0;
-        for (int neighbourX = gridX - distance; neighbourX <= gridX + distance; neighbourX++)        
-            for (int neighbourY = gridY - distance; neighbourY <= gridY + distance; neighbourY++)
+        for (int x = gridX - distance; x <= gridX + distance; x++)
+            for (int z = gridZ - distance; z <= gridZ + distance; z++)
             {
-                if (neighbourX >= 0 && neighbourX < xChunkCount * World.chunkSize && neighbourY >= 0 && neighbourY < yChunkCount * World.chunkSize)
+                if (x >= 0 && x < xChunkCount * World.chunkSize && z >= 0 && z < zChunkCount * World.chunkSize)
                 {
-                    if (neighbourX != gridX || neighbourY != gridY)
+                    if (x != gridX || z != gridZ)
                     {
-                        blockCount += flatMap[neighbourX,neighbourY] == blockType ? 1 : 0;
+                        blockCount += map[x, z] == blockType ? ( negative ? 0 : 1) : (negative ? 1 : 0);
                     }
                 }
                 else
@@ -140,49 +166,32 @@ public class FlatCaveMap : MapGenerator
         
         currentBlockMap=tmpBlockMap;
     }
-    int getNeighbours(int i,int j,int k){
-        int neighbourcount = 0;
-        if(currentBlockMap[i-1,j-1,k-1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i-1,j,k]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i-1,j+1,k-1]==Block.BlockType.STONE)neighbourcount++; 
+  
+    int CountSurroundingBlocks(int i,int j,int k, Block.BlockType blockType, Block.BlockType[,,] map, int distance, bool negative = false){
+        int blockCount = 0;
 
-        if(currentBlockMap[i,j-1,k-1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i,j,k-1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i,j+1,k-1]==Block.BlockType.STONE)neighbourcount++;
-
-        if(currentBlockMap[i+1,j-1,k-1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i+1,j,k-1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i+1,j+1,k-1]==Block.BlockType.STONE)neighbourcount++;
-
-        //-----------------------------------------------------------------------
-
-        if(currentBlockMap[i-1,j-1,k]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i-1,j,k]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i-1,j+1,k]==Block.BlockType.STONE)neighbourcount++; 
-
-        if(currentBlockMap[i,j-1,k]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i,j+1,k]==Block.BlockType.STONE)neighbourcount++;
-
-        if(currentBlockMap[i+1,j-1,k]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i+1,j,k]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i+1,j+1,k]==Block.BlockType.STONE)neighbourcount++;
-        
-        //-----------------------------------------------------------------------
-        
-        if(currentBlockMap[i-1,j-1,k+1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i-1,j,k+1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i-1,j+1,k+1]==Block.BlockType.STONE)neighbourcount++; 
-
-        if(currentBlockMap[i,j-1,k+1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i,j,k+1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i,j+1,k+1]==Block.BlockType.STONE)neighbourcount++;
-
-        if(currentBlockMap[i+1,j-1,k+1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i+1,j,k+1]==Block.BlockType.STONE)neighbourcount++;
-        if(currentBlockMap[i+1,j+1,k+1]==Block.BlockType.STONE)neighbourcount++;
-
-
-        return neighbourcount;
+        for (int x = -distance; x <= distance; x++)
+            for (int y = -distance; y <= distance; y++)
+                for (int z = -distance; z <= distance; z++)
+                {
+                    if ( x != 0 || y != 0 || z != 0 )
+                    {
+                        int xi = i + x;
+                        int yj = j + y;
+                        int zk = k + z;
+                        if (xi < xChunkCount * World.chunkSize && xi >= 0 &&
+                            yj < yChunkCount * World.chunkSize && yj >= 0 &&
+                            zk < zChunkCount * World.chunkSize && zk >= 0)
+                        {
+                                blockCount += map[xi, yj, zk] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
+                        }
+                        else
+                        {
+                            blockCount++;
+                        }
+                    }
+                }
+        return blockCount;
     }
 
 }
