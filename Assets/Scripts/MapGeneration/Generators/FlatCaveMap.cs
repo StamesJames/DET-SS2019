@@ -39,7 +39,11 @@ public class FlatCaveMap : MapGenerator
                     currentBlockMap[x, y, z] = flatMap[x, z];
                 }
 
-        CreaterBottomCeling();
+        CreateBottom();
+
+        for(int i=0;i<8;i++){   //Hier serialized field für iterations vom boden smoothing einfügen (4 bei tiefe 1, 8 bei tiefe 2)
+            SmoothBottom();
+        }
         
         return currentBlockMap;
     }
@@ -139,6 +143,30 @@ public class FlatCaveMap : MapGenerator
         return blockCount;
     }
 
+    void CreateBottom(){
+        for (int i = 0; i < xChunkCount * World.chunkSize; i++)
+            for (int j = 0; j < yChunkCount * World.chunkSize; j++)
+                {
+                    currentBlockMap[i, j, zChunkCount*World.chunkSize-1] = Block.BlockType.STONE;
+                }
+    }
+
+    void SmoothBottom(){
+            
+        Block.BlockType[,,] tmpBlockMap = currentBlockMap;
+
+        for (int k = 1; k < zChunkCount*World.chunkSize-1 ; k++)
+            for (int i = 1; i < xChunkCount * World.chunkSize-1; i++)
+                for (int j = 1; j < yChunkCount * World.chunkSize-1; j++){
+                    if(getNeighbours(i,j,k)>=12)     //anzahl neighbours evtl variabel machen?
+                    {
+                        tmpBlockMap[i,j,k] = Block.BlockType.STONE;
+                    }
+                }
+        
+        currentBlockMap=tmpBlockMap;
+    }
+  
     int CountSurroundingBlocks(int i,int j,int k, Block.BlockType blockType, Block.BlockType[,,] map, int distance, bool negative = false){
         int blockCount = 0;
 
