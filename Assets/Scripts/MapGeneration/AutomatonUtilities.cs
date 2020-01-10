@@ -31,6 +31,45 @@ public static class AutomatonUtilities
         return blockCount;
     }
 
+    public static int CountSurroundingBlocksDirect(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType, int distance = 1, bool negative = false)
+    {
+        int blockCount = 0;
+        for (int d = -distance; d <= distance; d++)
+        {
+            if (d != 0)
+            {
+                int xi = x + d;
+                int yj = y + d;
+                int zk = z + d;
+                if (xi < xChunkCount * World.chunkSize && xi >= 0)
+                {
+                    blockCount += map[xi, y, z] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
+                }
+                else
+                {
+                    blockCount++;
+                }
+                if (yj < yChunkCount * World.chunkSize && yj >= 0)
+                {
+                    blockCount += map[x, yj, z] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
+                }
+                else
+                {
+                    blockCount++;
+                }
+                if (zk < zChunkCount * World.chunkSize && zk >= 0)
+                {
+                    blockCount += map[x, y, zk] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
+                }
+                else
+                {
+                    blockCount++;
+                }
+            }
+        }
+        return blockCount;
+    }
+
     public static int CountSurroundingBlocks(int x, int z, int xChunkCount, int zChunkCount, Block.BlockType[,] map, Block.BlockType blockType, int distance = 1, bool negative = false)
     {
         int blockCount = 0;
@@ -49,6 +88,35 @@ public static class AutomatonUtilities
                     blockCount++;
                 }
             }
+        return blockCount;
+    }
+    public static int CountSurroundingBlocksDirect(int x, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,] map, Block.BlockType blockType, int distance = 1, bool negative = false)
+    {
+        int blockCount = 0;
+        for (int d = -distance; d <= distance; d++)
+        {
+            if (d != 0)
+            {
+                int xi = x + d;
+                int zk = z + d;
+                if (xi < xChunkCount * World.chunkSize && xi >= 0)
+                {
+                    blockCount += map[xi, z] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
+                }
+                else
+                {
+                    blockCount++;
+                }
+                if (zk < zChunkCount * World.chunkSize && zk >= 0)
+                {
+                    blockCount += map[x, zk] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
+                }
+                else
+                {
+                    blockCount++;
+                }
+            }
+        }
         return blockCount;
     }
 }

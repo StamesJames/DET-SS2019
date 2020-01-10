@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 [System.Serializable]
 public class FlatCaveMap : MapGenerator
@@ -15,6 +16,7 @@ public class FlatCaveMap : MapGenerator
     [SerializeField] private int woodChance = 10;
     [SerializeField] private int celingNeighbors = 4;
     [SerializeField] private int bottomNeighbors = 4;
+    [SerializeField] private int diamondSpawnRate = 5;
 
     public FlatCaveMap()
     {
@@ -47,8 +49,28 @@ public class FlatCaveMap : MapGenerator
         CreateBottom();
 
         SmoothBottom();
-        
+
+        SpawnRescources(Block.BlockType.DIAMOND, diamondSpawnRate);
+
         return currentBlockMap;
+    }
+
+    private void SpawnRescources(Block.BlockType whatToSpawn, int spawnRate)
+    {
+        System.Random pseudoRandom = new System.Random();
+        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+            for (int y = 0; y < yChunkCount * World.chunkSize; y++)
+                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                {
+                    if (currentBlockMap[x,y,z] == Block.BlockType.STONE && 
+                        AutomatonUtilities.CountSurroundingBlocksDirect(x,y,z,XChunkCount,YChunkCount,ZChunkCount,currentBlockMap,Block.BlockType.AIR) > 0)
+                    {
+                        if (pseudoRandom.Next(1,100) <= spawnRate)
+                        {
+                            currentBlockMap[x, y, z] = whatToSpawn;
+                        }
+                    }
+                }
     }
 
     void PutWood()
