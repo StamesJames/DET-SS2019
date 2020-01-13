@@ -17,6 +17,11 @@ public class FlatCaveMap : MapGenerator
     [SerializeField] private int celingNeighbors = 4;
     [SerializeField] private int bottomNeighbors = 4;
     [SerializeField] private int diamondSpawnRate = 5;
+    public int DiamondSpawnRate { get => diamondSpawnRate; set => diamondSpawnRate = value; }
+    [SerializeField] private int diamondOreDeepness = 5;
+    public int DiamondOreDeepness { get => diamondOreDeepness; set => diamondOreDeepness = value; }
+    [SerializeField] private int diamondOreExpansionRate = 5;
+    public int DiamondOreExpansionRate { get => diamondOreExpansionRate; set => diamondOreExpansionRate = value; }
 
     public FlatCaveMap()
     {
@@ -50,12 +55,12 @@ public class FlatCaveMap : MapGenerator
 
         SmoothBottom();
 
-        SpawnRescources(Block.BlockType.DIAMOND, diamondSpawnRate);
+        SpawnRescources(Block.BlockType.DIAMOND, DiamondSpawnRate, DiamondOreDeepness, DiamondOreExpansionRate);
 
         return currentBlockMap;
     }
 
-    private void SpawnRescources(Block.BlockType whatToSpawn, int spawnRate)
+    private void SpawnRescources(Block.BlockType whatToSpawn, int spawnRate, int spawnDeepnes, int spawnSpreadRate)
     {
         System.Random pseudoRandom = new System.Random();
         for (int x = 0; x < xChunkCount * World.chunkSize; x++)
@@ -68,6 +73,25 @@ public class FlatCaveMap : MapGenerator
                         if (pseudoRandom.Next(1,100) <= spawnRate)
                         {
                             currentBlockMap[x, y, z] = whatToSpawn;
+                        }
+                    }
+                }
+        for (int i = 0; i < spawnDeepnes; i++) RescourcesSpread( whatToSpawn, spawnSpreadRate);
+    }
+
+    private void RescourcesSpread(Block.BlockType rescource, int spawnRate)
+    {
+        System.Random pseudoRandom = new System.Random();
+        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+            for (int y = 0; y < yChunkCount * World.chunkSize; y++)
+                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                {
+                    if (currentBlockMap[x, y, z] == Block.BlockType.STONE &&
+                        AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, currentBlockMap, rescource) > 0)
+                    {
+                        if (pseudoRandom.Next(1, 100) <= spawnRate)
+                        {
+                            currentBlockMap[x, y, z] = rescource;
                         }
                     }
                 }
