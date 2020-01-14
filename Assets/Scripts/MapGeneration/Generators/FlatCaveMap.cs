@@ -16,6 +16,8 @@ public class FlatCaveMap : MapGenerator
     [SerializeField] private int woodChance = 10;
     [SerializeField] private int celingNeighbors = 4;
     [SerializeField] private int bottomNeighbors = 4;
+    [SerializeField] private float roughness = 1;
+    [SerializeField] private int roughnessIterations = 5;
 
     [SerializeField] private float diamondSpawnRate = 1;
     public float DiamondSpawnRate { get => diamondSpawnRate; set => diamondSpawnRate = value; }
@@ -57,9 +59,31 @@ public class FlatCaveMap : MapGenerator
 
         SmoothBottom();
 
+        for (int i = 0; i < roughnessIterations; i++) RoughenitUp();
+
         SpawnRescources(Block.BlockType.DIAMOND, DiamondSpawnRate, DiamondOreDeepness, DiamondOreExpansionRate);
 
         return currentBlockMap;
+    }
+
+    private void RoughenitUp()
+    {
+        Block.BlockType[,,] newMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
+        System.Random pseudoRandom = new System.Random();
+        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+            for (int y = 0; y < YChunkCount * World.chunkSize; y++)
+                for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
+                {
+                    newMap[x, y, z] = currentBlockMap[x, y, z];
+
+                    if (currentBlockMap[x,y,z] == Block.BlockType.STONE && 
+                        pseudoRandom.Next(1,100) <= roughness &&
+                        AutomatonUtilities.HasSurroundingBlocksDirect(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.AIR))
+                    {
+                        newMap[x, y, z] = Block.BlockType.AIR;
+                    }
+                }
+        currentBlockMap = newMap;
     }
 
     private void SpawnRescources(Block.BlockType whatToSpawn, float spawnRate, int spawnDeepnes, float spawnSpreadRate)
