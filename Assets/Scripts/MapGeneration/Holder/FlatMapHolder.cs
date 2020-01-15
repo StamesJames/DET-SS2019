@@ -12,6 +12,7 @@ public class FlatMapHolder : MapGeneratorHolder
     [SerializeField] private Slider randomFillPercentInput;
     [SerializeField] private TMP_InputField itterationCountInput;
     [SerializeField] private TextMeshProUGUI percentAnzeige;
+    [SerializeField] private TMP_Dropdown ruleDropDown;
 
     private FlatCaveMap generator = new FlatCaveMap();
 

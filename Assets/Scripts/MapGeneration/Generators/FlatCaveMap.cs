@@ -13,6 +13,7 @@ public class FlatCaveMap : MapGenerator
     public int SmoothingItterations { get => smoothingItterations; set => smoothingItterations = value; }
     [SerializeField] private Intervall[] birthIntervalls;
     [SerializeField] private Intervall[] deathIntervalls;
+    [SerializeField] private Ruleset currentRuleset; 
     [SerializeField] private int woodChance = 10;
     [SerializeField] private int celingNeighbors = 4;
     [SerializeField] private int bottomNeighbors = 4;
@@ -34,6 +35,7 @@ public class FlatCaveMap : MapGenerator
         ZChunkCount = 3;
         birthIntervalls = new Intervall[] { new Intervall(5, 8) };
         deathIntervalls = new Intervall[] { new Intervall(0, 3) };
+        currentRuleset = new Ruleset(birthIntervalls, deathIntervalls);
         GenerateMap();
     }
 
@@ -78,7 +80,7 @@ public class FlatCaveMap : MapGenerator
 
                     if (currentBlockMap[x,y,z] == Block.BlockType.STONE && 
                         pseudoRandom.Next(1,100) <= roughness &&
-                        AutomatonUtilities.HasSurroundingBlocksDirect(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.AIR))
+                        AutomatonUtilities.HasSurroundingBlocksDirect(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.AIR,countEdge:false))
                     {
                         newMap[x, y, z] = Block.BlockType.AIR;
                     }
@@ -152,22 +154,16 @@ public class FlatCaveMap : MapGenerator
                 newFlatMap[x, z] = flatMap[x, z];
                 if (flatMap[x,z] == Block.BlockType.STONE)
                 {
-                    foreach (Intervall deathIntervall in deathIntervalls)
+                    if (currentRuleset.checkDeath(neighboreCount))
                     {
-                        if (deathIntervall.Contains(neighboreCount))
-                        {
-                            newFlatMap[x, z] = Block.BlockType.AIR;
-                        }
+                        newFlatMap[x, z] = Block.BlockType.AIR;
                     }
                 }
                 else
                 {
-                    foreach (Intervall birthIntervall in birthIntervalls)
+                    if (currentRuleset.checkBirth(neighboreCount))
                     {
-                        if (birthIntervall.Contains(neighboreCount))
-                        {
-                            newFlatMap[x, z] = Block.BlockType.STONE;
-                        }
+                        newFlatMap[x, z] = Block.BlockType.STONE;
                     }
                 }
 			}
@@ -246,20 +242,3 @@ public class FlatCaveMap : MapGenerator
 
 }
 
-[System.Serializable]
-public class Intervall
-{
-    public float von;
-    public float bis;
-
-    public Intervall(float pVon, float pBis)
-    {
-        von = pVon;
-        bis = pBis;
-    }
-
-    public bool Contains(float x)
-    {
-        return (x >= von && x <= bis);
-    }
-}

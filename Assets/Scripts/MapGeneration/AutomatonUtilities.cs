@@ -203,3 +203,92 @@ public static class AutomatonUtilities
 
 
 }
+
+[System.Serializable]
+public class Intervall
+{
+    public float von;
+    public float bis;
+
+    public Intervall(float pVon, float pBis)
+    {
+        von = pVon;
+        bis = pBis;
+    }
+
+    public bool Contains(float x)
+    {
+        return (x >= von && x <= bis);
+    }
+
+    public override string ToString()
+    {
+        return (von + "-" + bis);
+    }
+
+}
+
+[System.Serializable]
+public class Ruleset
+{
+    Intervall[] birthRules;
+    Intervall[] deathRules;
+
+    public Ruleset(Intervall[] pBirthrules, Intervall[] pDeathRules)
+    {
+        this.birthRules = pBirthrules;
+        this.deathRules = pDeathRules;
+    }
+
+    public override string ToString()
+    {
+        string name = "";
+        string birthRulesString = "";
+        string deathRulesString = "";
+        for (int i = 0; i < birthRules.Length; i++)
+        {
+            birthRulesString += birthRules[i].ToString();
+            if (i != birthRules.Length -1)
+            {
+                birthRulesString += ",";
+            }
+        }
+
+        for (int i = 0; i < deathRules.Length; i++)
+        {
+            deathRulesString += deathRules[i].ToString();
+            if (i != deathRules.Length - 1)
+            {
+                deathRulesString += ",";
+            }
+        }
+
+        name = birthRulesString + "/" + deathRulesString;
+
+        return name;
+    }
+
+    public bool checkBirth(int count)
+    {
+        foreach (Intervall birthRule in birthRules)
+        {
+            if (birthRule.Contains(count))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool checkDeath(int count)
+    {
+        foreach (Intervall deathRule in deathRules)
+        {
+            if (deathRule.Contains(count))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+}
