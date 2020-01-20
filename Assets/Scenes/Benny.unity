@@ -5304,6 +5304,7 @@ MonoBehaviour:
   randomFillPercentInput: {fileID: 619134994}
   itterationCountInput: {fileID: 244012722}
   percentAnzeige: {fileID: 1666791288}
+  ruleDropDown: {fileID: 1879506115}
 --- !u!114 &945632954
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11196,7 +11197,7 @@ GameObject:
   - component: {fileID: 1879506116}
   - component: {fileID: 1879506115}
   m_Layer: 5
-  m_Name: Dropdown
+  m_Name: RulesDropdown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -14,6 +14,7 @@ public class FlatCaveMap : MapGenerator
     [SerializeField] private Intervall[] birthIntervalls;
     [SerializeField] private Intervall[] deathIntervalls;
     [SerializeField] private Ruleset currentRuleset; 
+    public Ruleset CurrentRuleset { get => currentRuleset; set => currentRuleset = value; }
     [SerializeField] private int woodChance = 10;
     [SerializeField] private int celingNeighbors = 4;
     [SerializeField] private int bottomNeighbors = 4;
@@ -35,7 +36,7 @@ public class FlatCaveMap : MapGenerator
         ZChunkCount = 3;
         birthIntervalls = new Intervall[] { new Intervall(5, 8) };
         deathIntervalls = new Intervall[] { new Intervall(0, 3) };
-        currentRuleset = new Ruleset(birthIntervalls, deathIntervalls);
+        CurrentRuleset = new Ruleset(birthIntervalls, deathIntervalls);
         GenerateMap();
     }
 
@@ -72,11 +73,14 @@ public class FlatCaveMap : MapGenerator
     {
         Block.BlockType[,,] newMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
         System.Random pseudoRandom = new System.Random();
-        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
-            for (int y = 0; y < YChunkCount * World.chunkSize; y++)
-                for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
+        for (int x = 0; x < (XChunkCount * World.chunkSize); x++)
+            for (int y = 0; y < (YChunkCount * World.chunkSize); y++)
+                for (int z = 0; z < (ZChunkCount * World.chunkSize); z++)
                 {
                     newMap[x, y, z] = currentBlockMap[x, y, z];
+
+                    if (x == 0 || y == 0 || z == 0 || x == XChunkCount * World.chunkSize - 1 || y == YChunkCount * World.chunkSize - 1 || z == ZChunkCount * World.chunkSize - 1)
+                        continue;
 
                     if (currentBlockMap[x,y,z] == Block.BlockType.STONE && 
                         pseudoRandom.Next(1,100) <= roughness &&
@@ -154,14 +158,14 @@ public class FlatCaveMap : MapGenerator
                 newFlatMap[x, z] = flatMap[x, z];
                 if (flatMap[x,z] == Block.BlockType.STONE)
                 {
-                    if (currentRuleset.checkDeath(neighboreCount))
+                    if (CurrentRuleset.checkDeath(neighboreCount))
                     {
                         newFlatMap[x, z] = Block.BlockType.AIR;
                     }
                 }
                 else
                 {
-                    if (currentRuleset.checkBirth(neighboreCount))
+                    if (CurrentRuleset.checkBirth(neighboreCount))
                     {
                         newFlatMap[x, z] = Block.BlockType.STONE;
                     }
