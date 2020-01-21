@@ -6,9 +6,15 @@ using UnityEngine;
 /// </summary>
 public class BlockInteraction : MonoBehaviour
 {
-	public GameObject cam;
+	public GameObject camObj;
+    private Camera cam;
 	Block.BlockType buildtype = Block.BlockType.STONE;
-	
+
+    private void Start()
+    {
+        cam = camObj.GetComponent<Camera>();
+    }
+
     /// <summary>
     /// Unity lifecycle update. Pressing numbers on the keyboard selects a block type for placement.
     /// Placing a block is done with a right click.
@@ -30,12 +36,13 @@ public class BlockInteraction : MonoBehaviour
             buildtype = Block.BlockType.WATER;
 
         // If left or right mouse button
-        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hit;
-            
-   			// Raycast starting from the position of the crosshair
-            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, 10))
+
+            // Raycast starting from the position of the crosshair
+            //if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, 10))
+            if (Physics.Raycast(cam.ScreenPointToRay(Input.mousePosition), out hit))
             {
    				Chunk hitc;
    				if(!World.chunks.TryGetValue(hit.collider.gameObject.name, out hitc)) return;
@@ -43,8 +50,7 @@ public class BlockInteraction : MonoBehaviour
    				Vector3 hitBlockPosition;
    				if(Input.GetMouseButtonDown(0))
    				{
-   					hitBlockPosition = hit.point - hit.normal/2.0f; // in case we want to hit a block
-   					
+   					hitBlockPosition = hit.point - hit.normal/2.0f; // in case we want to hit a block 					
    				}
    				else
    				 	hitBlockPosition = hit.point + hit.normal/2.0f; // in case we want to place a block

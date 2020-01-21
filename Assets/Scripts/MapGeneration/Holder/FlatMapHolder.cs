@@ -12,11 +12,23 @@ public class FlatMapHolder : MapGeneratorHolder
     [SerializeField] private Slider randomFillPercentInput;
     [SerializeField] private TMP_InputField itterationCountInput;
     [SerializeField] private TextMeshProUGUI percentAnzeige;
+    [SerializeField] private TMP_Dropdown ruleDropDown;
+
+    private Ruleset[] rules = new Ruleset[]{
+        new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 3) }),
+        new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 4) })};
 
     private FlatCaveMap generator = new FlatCaveMap();
 
     private void Start()
     {
+        ruleDropDown.ClearOptions();
+        List<string> ruleNames = new List<string>();
+        for (int i = 0; i < rules.Length; i++)
+        {
+            ruleNames.Add(rules[i].ToString());
+        }
+        ruleDropDown.AddOptions(ruleNames);
         UpdateValues();
     }
 
@@ -38,6 +50,7 @@ public class FlatMapHolder : MapGeneratorHolder
         generator.RandomFillPercent = (int) randomFillPercentInput.value;
         generator.SmoothingItterations = int.Parse(itterationCountInput.text);
         percentAnzeige.text = randomFillPercentInput.value.ToString() + "%";
+        generator.CurrentRuleset = rules[ruleDropDown.value];
     }
 
 }

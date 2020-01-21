@@ -9,6 +9,12 @@ public class ThreeDCave : MapGenerator
     public int RandomFillPercent { get => randomFillPercent; set => randomFillPercent = value; }
     [SerializeField] private int smoothingItterations = 3;
     public int SmoothingItterations { get => smoothingItterations; set => smoothingItterations = value; }
+    [SerializeField] private int diamondSpawnRate = 5;
+    public int DiamondPercent { get => diamondSpawnRate; set => diamondSpawnRate = value; }
+    [SerializeField] private int diamondOreDeepness = 5;
+    public int DiamondOreDeepness { get => diamondOreDeepness; set => diamondOreDeepness = value; }
+    [SerializeField] private int diamondOreExpansionRate = 5;
+    public int DiamondOreExpansionRate { get => diamondOreExpansionRate; set => diamondOreExpansionRate = value; }
     [SerializeField] private Intervall[] birthIntervalls;
     [SerializeField] private Intervall[] deathIntervalls;
 
@@ -29,7 +35,40 @@ public class ThreeDCave : MapGenerator
 
         for (int i = 0; i < smoothingItterations; i++) Smooth();
 
+        SpawnRescources(Block.BlockType.DIAMOND, diamondSpawnRate, DiamondOreDeepness, DiamondOreExpansionRate);
+
+        //SpawnPillars(); 
+
         return currentBlockMap;
+    }
+
+    private void SpawnPillars() // funktioniert noch nciht wirklich gut
+    {
+        Block.BlockType[,,] newMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
+        System.Random pseudoRandom = new System.Random();
+        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+            for (int y = 0; y < YChunkCount * World.chunkSize; y++)
+                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                {
+                    newMap[x, y, z] = currentBlockMap[x, y, z];
+                    int count = AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, xChunkCount, yChunkCount, zChunkCount, currentBlockMap, Block.BlockType.AIR, 5,
+                        countEdge: false);
+                    if (count >= 30){
+                        newMap[x, y, z] = Block.BlockType.WOOD;
+                    }
+                }
+        currentBlockMap = newMap;
+    }
+
+    private void SpawnRescources(Block.BlockType whatToSpawn, float spawnRate, int spawnDeepnes, float spawnSpreadRate)
+    {
+        currentBlockMap = AutomatonUtilities.SpawnBlocksRandomly(whatToSpawn, spawnRate, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap,
+            (int x, int y, int z) => currentBlockMap[x, y, z] == Block.BlockType.STONE &&
+                AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, currentBlockMap, Block.BlockType.AIR, countEdge: false) > 0);
+
+        for (int i = 0; i < spawnDeepnes; i++) currentBlockMap = AutomatonUtilities.SpawnBlocksRandomly(whatToSpawn, spawnSpreadRate, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap,
+            (int x, int y, int z) => currentBlockMap[x, y, z] == Block.BlockType.STONE &&
+                AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap, whatToSpawn, countEdge: false) > 0);
     }
 
     private void FillRandom()
@@ -58,7 +97,7 @@ public class ThreeDCave : MapGenerator
             for (int y = 0; y < YChunkCount * World.chunkSize; y++)
                 for (int z = 0; z < zChunkCount * World.chunkSize; z++)
                 {
-                    int neighborCount = CountSurroundingBlocks(x, y, z, Block.BlockType.AIR, currentBlockMap, 1, true);
+                    int neighborCount = AutomatonUtilities.CountSurroundingBlocks(x, y, z, xChunkCount, yChunkCount, zChunkCount,  currentBlockMap, Block.BlockType.AIR, 1, true);
                     newBlockMap[x, y, z] = currentBlockMap[x, y, z];
                     if (currentBlockMap[x,y, z] == Block.BlockType.STONE)
                     {
@@ -84,34 +123,6 @@ public class ThreeDCave : MapGenerator
         currentBlockMap = newBlockMap;
     }
 
-
-    int CountSurroundingBlocks(int i, int j, int k, Block.BlockType blockType, Block.BlockType[,,] map, int distance, bool negative = false)
-    {
-        int blockCount = 0;
-
-        for (int x = -distance; x <= distance; x++)
-            for (int y = -distance; y <= distance; y++)
-                for (int z = -distance; z <= distance; z++)
-                {
-                    if (x != 0 || y != 0 || z != 0)
-                    {
-                        int xi = i + x;
-                        int yj = j + y;
-                        int zk = k + z;
-                        if (xi < xChunkCount * World.chunkSize && xi >= 0 &&
-                            yj < yChunkCount * World.chunkSize && yj >= 0 &&
-                            zk < zChunkCount * World.chunkSize && zk >= 0)
-                        {
-                            blockCount += map[xi, yj, zk] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
-                        }
-                        else
-                        {
-                            blockCount++;
-                        }
-                    }
-                }
-        return blockCount;
-    }
 
 
 }

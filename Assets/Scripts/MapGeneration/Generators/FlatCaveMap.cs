@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 [System.Serializable]
 public class FlatCaveMap : MapGenerator
@@ -6,56 +7,107 @@ public class FlatCaveMap : MapGenerator
 
     private Block.BlockType[,] flatMap;
 
-    [SerializeField] private int randomFillPercent = 40;
-    public int RandomFillPercent { get => randomFillPercent; set => randomFillPercent = value; }
+    [SerializeField] private float randomFillPercent = 40;
+    public float RandomFillPercent { get => randomFillPercent; set => randomFillPercent = value; }
     [SerializeField] private int smoothingItterations = 3;
     public int SmoothingItterations { get => smoothingItterations; set => smoothingItterations = value; }
     [SerializeField] private Intervall[] birthIntervalls;
     [SerializeField] private Intervall[] deathIntervalls;
+    [SerializeField] private Ruleset currentRuleset; 
+    public Ruleset CurrentRuleset { get => currentRuleset; set => currentRuleset = value; }
     [SerializeField] private int woodChance = 10;
+    [SerializeField] private int celingNeighbors = 4;
+    [SerializeField] private int bottomNeighbors = 4;
+    [SerializeField] private float roughness = 1;
+    [SerializeField] private int roughnessIterations = 5;
+
+    [SerializeField] private float diamondSpawnRate = 1;
+    public float DiamondSpawnRate { get => diamondSpawnRate; set => diamondSpawnRate = value; }
+    [SerializeField] private int diamondOreDeepness = 5;
+    public int DiamondOreDeepness { get => diamondOreDeepness; set => diamondOreDeepness = value; }
+    [SerializeField] private float diamondOreExpansionRate = 5;
+    public float DiamondOreExpansionRate { get => diamondOreExpansionRate; set => diamondOreExpansionRate = value; }
 
     public FlatCaveMap()
     {
-        xChunkCount = 3;
-        yChunkCount = 3;
-        zChunkCount = 3;
+        Debug.Log(diamondSpawnRate);
+        XChunkCount = 3;
+        YChunkCount = 3;
+        ZChunkCount = 3;
         birthIntervalls = new Intervall[] { new Intervall(5, 8) };
         deathIntervalls = new Intervall[] { new Intervall(0, 3) };
+        CurrentRuleset = new Ruleset(birthIntervalls, deathIntervalls);
         GenerateMap();
     }
 
     public override Block.BlockType[,,] GenerateMap()
     {
-        flatMap = new Block.BlockType[xChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
-        currentBlockMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
+        flatMap = new Block.BlockType[XChunkCount * World.chunkSize, ZChunkCount * World.chunkSize];
+        currentBlockMap = new Block.BlockType[XChunkCount * World.chunkSize, YChunkCount * World.chunkSize, ZChunkCount * World.chunkSize];
         RandomFillMap();
 
         for (int i = 0; i < smoothingItterations; i++) SmoothMap();
 
         PutWood();
 
-        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
-            for (int y = 0; y < yChunkCount * World.chunkSize; y++)
-                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+            for (int y = 0; y < YChunkCount * World.chunkSize; y++)
+                for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
                 {
                     currentBlockMap[x, y, z] = flatMap[x, z];
                 }
 
-        //CreaterCeling();
-        //CreateBottom();
+        CreaterCeling();
+        CreateBottom();
 
-        for(int i=0;i<8;i++){   //Hier serialized field für iterations vom boden smoothing einfügen (4 bei tiefe 1, 8 bei tiefe 2)
-            //SmoothBottom();
-        }
-        
+        SmoothBottom();
+
+        for (int i = 0; i < roughnessIterations; i++) RoughenitUp();
+
+        SpawnRescources(Block.BlockType.DIAMOND, DiamondSpawnRate, DiamondOreDeepness, DiamondOreExpansionRate);
+
         return currentBlockMap;
+    }
+
+    private void RoughenitUp()
+    {
+        Block.BlockType[,,] newMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
+        System.Random pseudoRandom = new System.Random();
+        for (int x = 0; x < (XChunkCount * World.chunkSize); x++)
+            for (int y = 0; y < (YChunkCount * World.chunkSize); y++)
+                for (int z = 0; z < (ZChunkCount * World.chunkSize); z++)
+                {
+                    newMap[x, y, z] = currentBlockMap[x, y, z];
+
+                    if (x == 0 || y == 0 || z == 0 || x == XChunkCount * World.chunkSize - 1 || y == YChunkCount * World.chunkSize - 1 || z == ZChunkCount * World.chunkSize - 1)
+                        continue;
+
+                    if (currentBlockMap[x,y,z] == Block.BlockType.STONE && 
+                        pseudoRandom.Next(1,100) <= roughness &&
+                        AutomatonUtilities.HasSurroundingBlocksDirect(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.AIR,countEdge:false))
+                    {
+                        newMap[x, y, z] = Block.BlockType.AIR;
+                    }
+                }
+        currentBlockMap = newMap;
+    }
+
+    private void SpawnRescources(Block.BlockType whatToSpawn, float spawnRate, int spawnDeepnes, float spawnSpreadRate)
+    {
+        currentBlockMap = AutomatonUtilities.SpawnBlocksRandomly(whatToSpawn, spawnRate, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap,
+            (int x, int y, int z) => currentBlockMap[x, y, z] == Block.BlockType.STONE &&
+                AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, currentBlockMap, Block.BlockType.AIR, countEdge: false) > 0);
+
+        for (int i = 0; i < spawnDeepnes; i++) currentBlockMap = AutomatonUtilities.SpawnBlocksRandomly(whatToSpawn, spawnSpreadRate, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap,
+            (int x, int y, int z) => currentBlockMap[x,y,z] == Block.BlockType.STONE &&
+                AutomatonUtilities.CountSurroundingBlocksDirect(x,y,z, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap, whatToSpawn, countEdge: false) > 0);
     }
 
     void PutWood()
     {
         System.Random pseudoRandom = new System.Random();
-        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
-            for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+            for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
             {
                 if (flatMap[x,z] != Block.BlockType.STONE && HasNeighbor(x,z,Block.BlockType.STONE,1) && pseudoRandom.Next(1,100) < woodChance)
                 {
@@ -69,7 +121,7 @@ public class FlatCaveMap : MapGenerator
         for (int xi = x - distance; xi <= x + distance; xi++)
             for (int zj = z - distance; zj <= z + distance; zj++)
             {
-                if (xi >= 0 && xi < xChunkCount * World.chunkSize && zj >= 0 && zj < zChunkCount * World.chunkSize)
+                if (xi >= 0 && xi < XChunkCount * World.chunkSize && zj >= 0 && zj < ZChunkCount * World.chunkSize)
                 {
                     if ( (x != xi || z != zj ) && flatMap[xi,zj] == block)
                     {
@@ -83,10 +135,10 @@ public class FlatCaveMap : MapGenerator
     void RandomFillMap()
     {
         System.Random pseudoRandom = new System.Random();       
-        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
-            for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+            for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
             {
-                if (x == 0 || x == xChunkCount * World.chunkSize - 1 || z == 0 || z == zChunkCount * World.chunkSize - 1)
+                if (x == 0 || x == XChunkCount * World.chunkSize - 1 || z == 0 || z == ZChunkCount * World.chunkSize - 1)
                 {
                     flatMap[x, z] = Block.BlockType.STONE;
                 }
@@ -98,30 +150,24 @@ public class FlatCaveMap : MapGenerator
     }
 
     void SmoothMap() {
-        Block.BlockType[,] newFlatMap = new Block.BlockType[xChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
-		for (int x = 0; x < xChunkCount * World.chunkSize; x ++)
-			for (int z = 0; z < zChunkCount * World.chunkSize; z ++)
+        Block.BlockType[,] newFlatMap = new Block.BlockType[XChunkCount * World.chunkSize, ZChunkCount * World.chunkSize];
+		for (int x = 0; x < XChunkCount * World.chunkSize; x ++)
+			for (int z = 0; z < ZChunkCount * World.chunkSize; z ++)
             {
-				int neighboreCount = CountSurroundingBlocks(x,z,Block.BlockType.AIR,flatMap,1,true);
+				int neighboreCount = AutomatonUtilities.CountSurroundingBlocks(x,z,XChunkCount, ZChunkCount, flatMap, Block.BlockType.AIR, 1,true);
                 newFlatMap[x, z] = flatMap[x, z];
                 if (flatMap[x,z] == Block.BlockType.STONE)
                 {
-                    foreach (Intervall deathIntervall in deathIntervalls)
+                    if (CurrentRuleset.checkDeath(neighboreCount))
                     {
-                        if (deathIntervall.Contains(neighboreCount))
-                        {
-                            newFlatMap[x, z] = Block.BlockType.AIR;
-                        }
+                        newFlatMap[x, z] = Block.BlockType.AIR;
                     }
                 }
                 else
                 {
-                    foreach (Intervall birthIntervall in birthIntervalls)
+                    if (CurrentRuleset.checkBirth(neighboreCount))
                     {
-                        if (birthIntervall.Contains(neighboreCount))
-                        {
-                            newFlatMap[x, z] = Block.BlockType.STONE;
-                        }
+                        newFlatMap[x, z] = Block.BlockType.STONE;
                     }
                 }
 			}
@@ -129,118 +175,74 @@ public class FlatCaveMap : MapGenerator
 	}
 
     void CreaterCeling(){
-        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
-            for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+            for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
                 {
-                    currentBlockMap[x, yChunkCount * World.chunkSize - 1, z] = Block.BlockType.STONE;
+                    currentBlockMap[x, YChunkCount * World.chunkSize - 1, z] = Block.BlockType.STONE;
                 }
-        Block.BlockType[,] neueEbene = new Block.BlockType[xChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
-
-        for (int y = yChunkCount * World.chunkSize - 2; y > 0; y--)
+        Block.BlockType[,] neueEbene = new Block.BlockType[XChunkCount * World.chunkSize, ZChunkCount * World.chunkSize];
+        for (int y = YChunkCount * World.chunkSize - 2; y > 0; y--)
         {
-            for (int x = 0; x < xChunkCount * World.chunkSize; x++)
-                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+            for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+                for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
                 {
-                    neueEbene[x, z] = currentBlockMap[x,y,z] == Block.BlockType.STONE ||
-                        CountSurroundingBlocks(x, y, z, Block.BlockType.AIR, currentBlockMap, 1, true) >= 14 ? Block.BlockType.STONE : Block.BlockType.AIR;                        
+                    if (currentBlockMap[x,y,z] != Block.BlockType.AIR)
+                    {
+                        neueEbene[x, z] = currentBlockMap[x, y, z];
+                    }
+                    else
+                    {
+                        neueEbene[x, z] = AutomatonUtilities.CountSurroundingBlocks(x, y, z, XChunkCount,YChunkCount,ZChunkCount, currentBlockMap, Block.BlockType.AIR, 1, true) >= 14 ? 
+                            Block.BlockType.STONE : Block.BlockType.AIR;
+                    }
                 }
-
-            for (int x = 0; x < xChunkCount * World.chunkSize; x++)
-                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+            for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+                for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
                 {
                     currentBlockMap[x, y, z] = neueEbene[x, z];
                 }
         }
     }
 
-    int CountSurroundingBlocks(int gridX, int gridZ, Block.BlockType blockType, Block.BlockType[,] map, int distance, bool negative = false)
-    {
-        int blockCount = 0;
-        for (int x = gridX - distance; x <= gridX + distance; x++)
-            for (int z = gridZ - distance; z <= gridZ + distance; z++)
-            {
-                if (x >= 0 && x < xChunkCount * World.chunkSize && z >= 0 && z < zChunkCount * World.chunkSize)
-                {
-                    if (x != gridX || z != gridZ)
-                    {
-                        blockCount += map[x, z] == blockType ? ( negative ? 0 : 1) : (negative ? 1 : 0);
-                    }
-                }
-                else
-                {
-                    blockCount++;
-                }
-            }
-        return blockCount;
-    }
+
 
     void CreateBottom(){
-        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
-            for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+            for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
                 {
                     currentBlockMap[x, 0, z] = Block.BlockType.STONE;
                 }
     }
 
     void SmoothBottom(){
-            
-        Block.BlockType[,,] tmpBlockMap = currentBlockMap;
-
-        for (int k = 1; k < zChunkCount*World.chunkSize-1 ; k++)
-            for (int i = 1; i < xChunkCount * World.chunkSize-1; i++)
-                for (int j = 1; j < yChunkCount * World.chunkSize-1; j++){
-                    if(CountSurroundingBlocks(i,j,k, Block.BlockType.AIR, currentBlockMap, 1, true)>=14)     //anzahl neighbours evtl variabel machen?
-                    {
-                        tmpBlockMap[i,j,k] = Block.BlockType.STONE;
-                    }
-                }
-        
-        currentBlockMap=tmpBlockMap;
-    }
-  
-    int CountSurroundingBlocks(int i,int j,int k, Block.BlockType blockType, Block.BlockType[,,] map, int distance, bool negative = false){
-        int blockCount = 0;
-
-        for (int x = -distance; x <= distance; x++)
-            for (int y = -distance; y <= distance; y++)
-                for (int z = -distance; z <= distance; z++)
+        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+            for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
+            {
+                currentBlockMap[x, YChunkCount * World.chunkSize - 1, z] = Block.BlockType.STONE;
+            }
+        Block.BlockType[,] neueEbene = new Block.BlockType[XChunkCount * World.chunkSize, ZChunkCount * World.chunkSize];
+        for (int y = 0; y < YChunkCount; y++)
+        {
+            for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+                for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
                 {
-                    if ( x != 0 || y != 0 || z != 0 )
+                    if (currentBlockMap[x, y, z] != Block.BlockType.AIR)
                     {
-                        int xi = i + x;
-                        int yj = j + y;
-                        int zk = k + z;
-                        if (xi < xChunkCount * World.chunkSize && xi >= 0 &&
-                            yj < yChunkCount * World.chunkSize && yj >= 0 &&
-                            zk < zChunkCount * World.chunkSize && zk >= 0)
-                        {
-                                blockCount += map[xi, yj, zk] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
-                        }
-                        else
-                        {
-                            blockCount++;
-                        }
+                        neueEbene[x, z] = currentBlockMap[x, y, z];
+                    }
+                    else
+                    {
+                        neueEbene[x, z] = AutomatonUtilities.CountSurroundingBlocks(x, y, z, XChunkCount, YChunkCount, ZChunkCount, currentBlockMap, Block.BlockType.AIR, 1, true) >= 14 ? 
+                            Block.BlockType.STONE : Block.BlockType.AIR;
                     }
                 }
-        return blockCount;
+            for (int x = 0; x < XChunkCount * World.chunkSize; x++)
+                for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
+                {
+                    currentBlockMap[x, y, z] = neueEbene[x, z];
+                }
+        }
     }
 
 }
 
-[System.Serializable]
-public class Intervall
-{
-    public float von;
-    public float bis;
-
-    public Intervall(float pVon, float pBis)
-    {
-        von = pVon;
-        bis = pBis;
-    }
-
-    public bool Contains(float x)
-    {
-        return (x >= von && x <= bis);
-    }
-}
