@@ -10,13 +10,17 @@ public class FlatMapHolder : MapGeneratorHolder
     [SerializeField] private TMP_InputField yChunkCountInput;
     [SerializeField] private TMP_InputField zChunkCountInput;
     [SerializeField] private Slider randomFillPercentSlider;
+    [SerializeField] private TextMeshProUGUI randomFillPercentAnzeige;
     [SerializeField] private TMP_InputField itterationCountInput;
-    [SerializeField] private TextMeshProUGUI percentAnzeige;
     [SerializeField] private TMP_Dropdown ruleDropDown;
     [SerializeField] private Slider diamondSpawnRateSlider;
-    [SerializeField] private Slider diamondExtantionRateSlider;
+    [SerializeField] private TextMeshProUGUI diamondSpawnRateAnzeige;
+    [SerializeField] private Slider diamondExtentionRateSlider;
+    [SerializeField] private TextMeshProUGUI diamondExtentionRateAnzeige;
     [SerializeField] private TMP_InputField diamondSpawnIterationsInput;
-
+    [SerializeField] private Slider roughnessRateSlider;
+    [SerializeField] private TextMeshProUGUI roughnessRateAnzeige;
+    [SerializeField] private TMP_InputField roughnessIterationsInput;
     private Ruleset[] rules = new Ruleset[]{
         new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 3) }),
         new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 4) })};
@@ -52,11 +56,16 @@ public class FlatMapHolder : MapGeneratorHolder
         UpdateChunkCountSize();
         generator.RandomFillPercent = (int) randomFillPercentSlider.value;
         generator.SmoothingItterations = int.Parse(itterationCountInput.text);
-        percentAnzeige.text = randomFillPercentSlider.value.ToString() + "%";
         generator.CurrentRuleset = rules[ruleDropDown.value];
         generator.DiamondSpawnRate = (diamondSpawnRateSlider.value);
-        generator.DiamondOreExpansionRate = diamondExtantionRateSlider.value;
+        generator.DiamondOreExpansionRate = diamondExtentionRateSlider.value;
         generator.DiamondOreDeepness = int.Parse(diamondSpawnIterationsInput.text);
+        generator.Roughness = roughnessRateSlider.value;
+        generator.RoughnessIterations = int.Parse(roughnessIterationsInput.text);
+        randomFillPercentAnzeige.text = randomFillPercentSlider.value.ToString() + "%";
+        diamondSpawnRateAnzeige.text = diamondSpawnRateSlider.value.ToString() + "%";
+        diamondExtentionRateAnzeige.text = diamondExtentionRateSlider.value.ToString() + "%";
+        roughnessRateAnzeige.text = roughnessRateSlider.value.ToString() + "%";
     }
 
 }

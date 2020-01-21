@@ -66,7 +66,18 @@ public class FlatCaveMap : MapGenerator
 
         SpawnRescources(Block.BlockType.DIAMOND, DiamondSpawnRate, DiamondOreDeepness, DiamondOreExpansionRate);
 
+        RemoveFloatingBlocks();
         return currentBlockMap;
+    }
+
+    private void RemoveFloatingBlocks()
+    {
+        for (int x = 0; x < (XChunkCount * World.chunkSize); x++)
+            for (int y = 0; y < (YChunkCount * World.chunkSize); y++)
+                for (int z = 0; z < (ZChunkCount * World.chunkSize); z++) {
+                    if(AutomatonUtilities.CountSurroundingBlocksDirect(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.AIR) == 6)
+                        currentBlockMap[x,y,z] = Block.BlockType.AIR;
+                }   
     }
 
     private void RoughenitUp()
