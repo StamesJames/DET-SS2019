@@ -9,7 +9,7 @@ public class FlatCaveMap : MapGenerator
 
     [SerializeField] private float randomFillPercent = 40;
     public float RandomFillPercent { get => randomFillPercent; set => randomFillPercent = value; }
-    [SerializeField] private int smoothingItterations = 3;
+    [SerializeField] private int smoothingItterations = 5;
     public int SmoothingItterations { get => smoothingItterations; set => smoothingItterations = value; }
     [SerializeField] private Ruleset currentRuleset; 
     public Ruleset CurrentRuleset { get => currentRuleset; set => currentRuleset = value; }
@@ -60,7 +60,8 @@ public class FlatCaveMap : MapGenerator
         CreaterCeling();
         CreateBottom();
 
-        SmoothBottom();
+        //SmoothBottom();
+        for (int i = 0; i < smoothingItterations; i++) SmoothBottom();
 
         for (int i = 0; i < RoughnessIterations; i++) RoughenitUp();
 
