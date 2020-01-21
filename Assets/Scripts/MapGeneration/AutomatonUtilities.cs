@@ -75,7 +75,7 @@ public static class AutomatonUtilities
         return blockCount;
     }
 
-    public static bool HasSurroundingBlocksDirect(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
+    public static bool HasSurroundingBlockDirect(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
     int distance = 1, bool negative = false, bool countEdge = true,
     bool xDirection = true, bool yDirection = true, bool zDirection = true)
     {
@@ -122,6 +122,70 @@ public static class AutomatonUtilities
             }
         }
         return false;
+    }
+
+    public static bool HasSurroundingBlockCircle(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType, 
+    int distance = 1, bool negative = false, bool countEdge = true, 
+    bool xDirection = true, bool yDirection = true, bool zDirection = true)
+    {
+        for (int xd = ( xDirection ? -distance : 0 ); xd <= ( xDirection ? distance : 0 ); xd++)
+            for (int yd = (yDirection ? -distance : 0); yd <= (yDirection ? distance : 0); yd++)
+                for (int zd = (zDirection ? -distance : 0); zd <= (zDirection ? distance : 0); zd++)
+                {
+                    if (xd != 0 || yd != 0 || zd != 0)
+                    {
+                        int xi = x + xd;
+                        int yj = y + yd;
+                        int zk = z + zd;
+                        if (xi < xChunkCount * World.chunkSize && xi >= 0 &&
+                            yj < yChunkCount * World.chunkSize && yj >= 0 &&
+                            zk < zChunkCount * World.chunkSize && zk >= 0 )
+                        {
+                            if (Mathf.Sqrt(Mathf.Pow(xDirection ? xd : 0,2) + Mathf.Pow(yDirection ? yd : 0,2) + Mathf.Pow(zDirection ? zd : 0,2)) <= distance)
+                            {
+                                if (map[xi,yj,zk] == blockType)
+                                {
+                                    return true;
+                                }
+                            } 
+                        }
+                        else if (countEdge)
+                        {
+                            return true;;
+                        }
+                    }
+                }
+        return false;
+    }
+
+    public static int CountSurroundingBlocksCircle(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType, 
+    int distance = 1, bool negative = false, bool countEdge = true, 
+    bool xDirection = true, bool yDirection = true, bool zDirection = true)
+    {
+        int blockCount = 0;
+        for (int xd = ( xDirection ? -distance : 0 ); xd <= ( xDirection ? distance : 0 ); xd++)
+            for (int yd = (yDirection ? -distance : 0); yd <= (yDirection ? distance : 0); yd++)
+                for (int zd = (zDirection ? -distance : 0); zd <= (zDirection ? distance : 0); zd++)
+                {
+                    if (xd != 0 || yd != 0 || zd != 0)
+                    {
+                        int xi = x + xd;
+                        int yj = y + yd;
+                        int zk = z + zd;
+                        if (xi < xChunkCount * World.chunkSize && xi >= 0 &&
+                            yj < yChunkCount * World.chunkSize && yj >= 0 &&
+                            zk < zChunkCount * World.chunkSize && zk >= 0 && 
+                            Mathf.Sqrt(Mathf.Pow(xi,2) + Mathf.Pow(yj,2) + Mathf.Pow(zk,2)) <= distance)
+                        {
+                            blockCount += map[xi, yj, zk] == blockType ? (negative ? 0 : 1) : (negative ? 1 : 0);
+                        }
+                        else if (countEdge)
+                        {
+                            blockCount++;
+                        }
+                    }
+                }
+        return blockCount;
     }
 
     public static int CountSurroundingBlocks(int x, int z, int xChunkCount, int zChunkCount, Block.BlockType[,] map, Block.BlockType blockType, 
