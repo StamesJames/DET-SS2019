@@ -11,16 +11,18 @@ public class FlatCaveMap : MapGenerator
     public float RandomFillPercent { get => randomFillPercent; set => randomFillPercent = value; }
     [SerializeField] private int smoothingItterations = 3;
     public int SmoothingItterations { get => smoothingItterations; set => smoothingItterations = value; }
-    [SerializeField] private Intervall[] birthIntervalls;
-    [SerializeField] private Intervall[] deathIntervalls;
     [SerializeField] private Ruleset currentRuleset; 
     public Ruleset CurrentRuleset { get => currentRuleset; set => currentRuleset = value; }
     [SerializeField] private int woodChance = 10;
+    public int WoodChance { get => woodChance; set => woodChance = value; }
     [SerializeField] private int celingNeighbors = 4;
+    public int CelingNeighbors { get => celingNeighbors; set => celingNeighbors = value; }
     [SerializeField] private int bottomNeighbors = 4;
+    public int BottomNeighbors { get => bottomNeighbors; set => bottomNeighbors = value; }
     [SerializeField] private float roughness = 1;
+    public float Roughness { get => roughness; set => roughness = value; }
     [SerializeField] private int roughnessIterations = 5;
-
+    public int RoughnessIterations { get => roughnessIterations; set => roughnessIterations = value; }
     [SerializeField] private float diamondSpawnRate = 1;
     public float DiamondSpawnRate { get => diamondSpawnRate; set => diamondSpawnRate = value; }
     [SerializeField] private int diamondOreDeepness = 5;
@@ -34,9 +36,7 @@ public class FlatCaveMap : MapGenerator
         XChunkCount = 3;
         YChunkCount = 3;
         ZChunkCount = 3;
-        birthIntervalls = new Intervall[] { new Intervall(5, 8) };
-        deathIntervalls = new Intervall[] { new Intervall(0, 3) };
-        CurrentRuleset = new Ruleset(birthIntervalls, deathIntervalls);
+        CurrentRuleset = new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 3) });
         GenerateMap();
     }
 
@@ -62,7 +62,7 @@ public class FlatCaveMap : MapGenerator
 
         SmoothBottom();
 
-        for (int i = 0; i < roughnessIterations; i++) RoughenitUp();
+        for (int i = 0; i < RoughnessIterations; i++) RoughenitUp();
 
         SpawnRescources(Block.BlockType.DIAMOND, DiamondSpawnRate, DiamondOreDeepness, DiamondOreExpansionRate);
 
@@ -109,7 +109,7 @@ public class FlatCaveMap : MapGenerator
         for (int x = 0; x < XChunkCount * World.chunkSize; x++)
             for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
             {
-                if (flatMap[x,z] != Block.BlockType.STONE && HasNeighbor(x,z,Block.BlockType.STONE,1) && pseudoRandom.Next(1,100) < woodChance)
+                if (flatMap[x,z] != Block.BlockType.STONE && HasNeighbor(x,z,Block.BlockType.STONE,1) && pseudoRandom.Next(1,100) < WoodChance)
                 {
                     flatMap[x,z] = Block.BlockType.WOOD;
                 }

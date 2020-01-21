@@ -9,10 +9,13 @@ public class FlatMapHolder : MapGeneratorHolder
     [SerializeField] private TMP_InputField xChunkCountInput;
     [SerializeField] private TMP_InputField yChunkCountInput;
     [SerializeField] private TMP_InputField zChunkCountInput;
-    [SerializeField] private Slider randomFillPercentInput;
+    [SerializeField] private Slider randomFillPercentSlider;
     [SerializeField] private TMP_InputField itterationCountInput;
     [SerializeField] private TextMeshProUGUI percentAnzeige;
     [SerializeField] private TMP_Dropdown ruleDropDown;
+    [SerializeField] private Slider diamondSpawnRateSlider;
+    [SerializeField] private Slider diamondExtantionRateSlider;
+    [SerializeField] private TMP_InputField diamondSpawnIterationsInput;
 
     private Ruleset[] rules = new Ruleset[]{
         new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 3) }),
@@ -47,10 +50,13 @@ public class FlatMapHolder : MapGeneratorHolder
     public override void UpdateValues()
     {
         UpdateChunkCountSize();
-        generator.RandomFillPercent = (int) randomFillPercentInput.value;
+        generator.RandomFillPercent = (int) randomFillPercentSlider.value;
         generator.SmoothingItterations = int.Parse(itterationCountInput.text);
-        percentAnzeige.text = randomFillPercentInput.value.ToString() + "%";
+        percentAnzeige.text = randomFillPercentSlider.value.ToString() + "%";
         generator.CurrentRuleset = rules[ruleDropDown.value];
+        generator.DiamondSpawnRate = (diamondSpawnRateSlider.value);
+        generator.DiamondOreExpansionRate = diamondExtantionRateSlider.value;
+        generator.DiamondOreDeepness = int.Parse(diamondSpawnIterationsInput.text);
     }
 
 }
