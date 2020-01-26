@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class ThreeDCave : MapGenerator
 {
+    [SerializeField] private System.Random pseudoRandom;
     [SerializeField] private int randomFillPercent = 40;
     public int RandomFillPercent { get => randomFillPercent; set => randomFillPercent = value; }
     [SerializeField] private int smoothingItterations = 3;
@@ -45,7 +46,6 @@ public class ThreeDCave : MapGenerator
     private void SpawnPillars() // funktioniert noch nciht wirklich gut
     {
         Block.BlockType[,,] newMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
-        System.Random pseudoRandom = new System.Random();
         for (int x = 0; x < xChunkCount * World.chunkSize; x++)
             for (int y = 0; y < YChunkCount * World.chunkSize; y++)
                 for (int z = 0; z < zChunkCount * World.chunkSize; z++)
@@ -64,16 +64,17 @@ public class ThreeDCave : MapGenerator
     {
         currentBlockMap = AutomatonUtilities.SpawnBlocksRandomly(whatToSpawn, spawnRate, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap,
             (int x, int y, int z) => currentBlockMap[x, y, z] == Block.BlockType.STONE &&
-                AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, currentBlockMap, Block.BlockType.AIR, countEdge: false) > 0);
+                AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, 
+                currentBlockMap, Block.BlockType.AIR, countEdge: false) > 0, pseudoRandom);
 
         for (int i = 0; i < spawnDeepnes; i++) currentBlockMap = AutomatonUtilities.SpawnBlocksRandomly(whatToSpawn, spawnSpreadRate, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap,
             (int x, int y, int z) => currentBlockMap[x, y, z] == Block.BlockType.STONE &&
-                AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, CurrentBlockMap, whatToSpawn, countEdge: false) > 0);
+                AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, 
+                CurrentBlockMap, whatToSpawn, countEdge: false) > 0, pseudoRandom);
     }
 
     private void FillRandom()
     {
-        System.Random pseudoRandom = new System.Random();
         for (int x = 0; x < xChunkCount * World.chunkSize; x++)
             for (int y = 0; y < YChunkCount * World.chunkSize; y++)
                 for (int z = 0; z < zChunkCount * World.chunkSize; z++)
