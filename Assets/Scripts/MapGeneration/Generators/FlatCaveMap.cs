@@ -9,18 +9,20 @@ public class FlatCaveMap : MapGenerator
 
     [SerializeField] private float randomFillPercent = 40;
     public float RandomFillPercent { get => randomFillPercent; set => randomFillPercent = value; }
-    [SerializeField] private int smoothingItterations = 3;
+    [SerializeField] private int smoothingItterations = 5;
     public int SmoothingItterations { get => smoothingItterations; set => smoothingItterations = value; }
-    [SerializeField] private Intervall[] birthIntervalls;
-    [SerializeField] private Intervall[] deathIntervalls;
     [SerializeField] private Ruleset currentRuleset; 
     public Ruleset CurrentRuleset { get => currentRuleset; set => currentRuleset = value; }
     [SerializeField] private int woodChance = 10;
+    public int WoodChance { get => woodChance; set => woodChance = value; }
     [SerializeField] private int celingNeighbors = 4;
+    public int CelingNeighbors { get => celingNeighbors; set => celingNeighbors = value; }
     [SerializeField] private int bottomNeighbors = 4;
+    public int BottomNeighbors { get => bottomNeighbors; set => bottomNeighbors = value; }
     [SerializeField] private float roughness = 1;
+    public float Roughness { get => roughness; set => roughness = value; }
     [SerializeField] private int roughnessIterations = 5;
-
+    public int RoughnessIterations { get => roughnessIterations; set => roughnessIterations = value; }
     [SerializeField] private float diamondSpawnRate = 1;
     public float DiamondSpawnRate { get => diamondSpawnRate; set => diamondSpawnRate = value; }
     [SerializeField] private int diamondOreDeepness = 5;
@@ -34,9 +36,7 @@ public class FlatCaveMap : MapGenerator
         XChunkCount = 3;
         YChunkCount = 3;
         ZChunkCount = 3;
-        birthIntervalls = new Intervall[] { new Intervall(5, 8) };
-        deathIntervalls = new Intervall[] { new Intervall(0, 3) };
-        CurrentRuleset = new Ruleset(birthIntervalls, deathIntervalls);
+        CurrentRuleset = new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 3) });
         GenerateMap();
     }
 
@@ -57,16 +57,43 @@ public class FlatCaveMap : MapGenerator
                     currentBlockMap[x, y, z] = flatMap[x, z];
                 }
 
-        CreaterCeling();
-        CreateBottom();
 
-        SmoothBottom();
 
-        for (int i = 0; i < roughnessIterations; i++) RoughenitUp();
+        //CreaterCeling();
+        //CreateBottom();
+
+        //SmoothBottom();
+        //for (int i = 0; i < smoothingItterations; i++) SmoothBottom();
+
+        PutGroundRoof();
+
+        CreateCeling(new int[]{8,5,3,2,1,1});
+
+        for (int i = 0; i < RoughnessIterations; i++) RoughenitUp();
 
         SpawnRescources(Block.BlockType.DIAMOND, DiamondSpawnRate, DiamondOreDeepness, DiamondOreExpansionRate);
 
+        RemoveFloatingBlocks();
         return currentBlockMap;
+    }
+
+    void PutGroundRoof(){
+        for (int x = 0; x < World.chunkSize * xChunkCount; x++)
+            for (int z = 0; z < World.chunkSize * zChunkCount; z++)
+                {
+                    currentBlockMap[x,0,z] = Block.BlockType.STONE;
+                    currentBlockMap[x, World.chunkSize * yChunkCount - 1, z] = Block.BlockType.STONE;
+                }
+    }
+
+    private void RemoveFloatingBlocks()
+    {
+        for (int x = 0; x < (XChunkCount * World.chunkSize); x++)
+            for (int y = 0; y < (YChunkCount * World.chunkSize); y++)
+                for (int z = 0; z < (ZChunkCount * World.chunkSize); z++) {
+                    if(AutomatonUtilities.CountSurroundingBlocksDirect(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.AIR) == 6)
+                        currentBlockMap[x,y,z] = Block.BlockType.AIR;
+                }   
     }
 
     private void RoughenitUp()
@@ -84,7 +111,7 @@ public class FlatCaveMap : MapGenerator
 
                     if (currentBlockMap[x,y,z] == Block.BlockType.STONE && 
                         pseudoRandom.Next(1,100) <= roughness &&
-                        AutomatonUtilities.HasSurroundingBlocksDirect(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.AIR,countEdge:false))
+                        AutomatonUtilities.HasSurroundingBlockDirect(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.AIR,countEdge:false))
                     {
                         newMap[x, y, z] = Block.BlockType.AIR;
                     }
@@ -109,7 +136,7 @@ public class FlatCaveMap : MapGenerator
         for (int x = 0; x < XChunkCount * World.chunkSize; x++)
             for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
             {
-                if (flatMap[x,z] != Block.BlockType.STONE && HasNeighbor(x,z,Block.BlockType.STONE,1) && pseudoRandom.Next(1,100) < woodChance)
+                if (flatMap[x,z] != Block.BlockType.STONE && HasNeighbor(x,z,Block.BlockType.STONE,1) && pseudoRandom.Next(1,100) < WoodChance)
                 {
                     flatMap[x,z] = Block.BlockType.WOOD;
                 }
@@ -174,6 +201,32 @@ public class FlatCaveMap : MapGenerator
         flatMap = newFlatMap;
 	}
 
+    void CreateCeling(int[] distanceArray){
+        Block.BlockType[,,] newMap = new Block.BlockType[xChunkCount * World.chunkSize,yChunkCount * World.chunkSize,zChunkCount * World.chunkSize];
+        for (int i = 0; i < distanceArray.Length; i++)
+        {
+            int y = World.chunkSize * YChunkCount - i - 2;
+            for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                {
+                    newMap[x,y,z] = AutomatonUtilities.HasSurroundingBlockCircle(x,y,z,xChunkCount,yChunkCount,zChunkCount,currentBlockMap,Block.BlockType.STONE,distanceArray[i], yDirection:false) ?
+                        Block.BlockType.STONE : currentBlockMap[x,y,z];
+                }            
+        }
+        for (int y =  0; y < World.chunkSize * YChunkCount - distanceArray.Length - 1; y++)
+            for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+                for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                    {
+                        newMap[x,y,z] = currentBlockMap[x,y,z];
+                    }
+        for (int x = 0; x < xChunkCount * World.chunkSize; x++)
+            for (int z = 0; z < zChunkCount * World.chunkSize; z++)
+                {
+                    newMap[x,World.chunkSize * YChunkCount - 1,z] = currentBlockMap[x,World.chunkSize * YChunkCount -1,z];
+                }
+        currentBlockMap = newMap;
+    }
+
     void CreaterCeling(){
         for (int x = 0; x < XChunkCount * World.chunkSize; x++)
             for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
@@ -215,11 +268,6 @@ public class FlatCaveMap : MapGenerator
     }
 
     void SmoothBottom(){
-        for (int x = 0; x < XChunkCount * World.chunkSize; x++)
-            for (int z = 0; z < ZChunkCount * World.chunkSize; z++)
-            {
-                currentBlockMap[x, YChunkCount * World.chunkSize - 1, z] = Block.BlockType.STONE;
-            }
         Block.BlockType[,] neueEbene = new Block.BlockType[XChunkCount * World.chunkSize, ZChunkCount * World.chunkSize];
         for (int y = 0; y < YChunkCount; y++)
         {
@@ -232,7 +280,7 @@ public class FlatCaveMap : MapGenerator
                     }
                     else
                     {
-                        neueEbene[x, z] = AutomatonUtilities.CountSurroundingBlocks(x, y, z, XChunkCount, YChunkCount, ZChunkCount, currentBlockMap, Block.BlockType.AIR, 1, true) >= 14 ? 
+                        neueEbene[x, z] = AutomatonUtilities.CountSurroundingBlocksDirect(x, y, z, XChunkCount, YChunkCount, ZChunkCount, currentBlockMap, Block.BlockType.AIR, 1, true) >= 2 ? 
                             Block.BlockType.STONE : Block.BlockType.AIR;
                     }
                 }
