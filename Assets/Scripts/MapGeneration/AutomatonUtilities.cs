@@ -210,6 +210,80 @@ public static class AutomatonUtilities
         return false;
     }
 
+    public static int[] CurveParser(string curveString)
+    {
+        List<int> curveArray = new List<int>();
+
+        string[] curveStringArray = curveString.Split('/');
+        for (int i = 0; i < curveStringArray.Length; i++)
+        {
+            Debug.Log(curveStringArray[i]);
+            try
+            {
+                curveArray.Add(int.Parse(curveStringArray[i]));
+            }
+            catch
+            {
+                Debug.Log("konnte \"" + curveStringArray[i] + "\" nicht Parsen");
+            }
+        }
+
+        return curveArray.ToArray();
+    }
+
+    public static bool HasSurroundingBlock(NeighborType neighborType,int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
+        int distance = 1, bool negative = false, bool countEdge = true,
+        bool xDirection = true, bool yDirection = true, bool zDirection = true)
+    {
+        if (neighborType == NeighborType.CIRCLE)
+        {
+            return HasSurroundingBlockCircle(x, y, z, xChunkCount, yChunkCount, zChunkCount, map, blockType, distance, negative, countEdge, xDirection, yDirection, zDirection);
+        }
+        else if (neighborType == NeighborType.SQUARE)
+        {
+            return HasSurroundingBlockSquare(x, y, z, xChunkCount, yChunkCount, zChunkCount, map, blockType, distance, negative, countEdge, xDirection, yDirection, zDirection);
+        }
+        else if (neighborType == NeighborType.DIRECT)
+        {
+            return HasSurroundingBlockDirect(x, y, z, xChunkCount, yChunkCount, zChunkCount, map, blockType, distance, negative, countEdge, xDirection, yDirection, zDirection);
+        }
+        else
+        {
+            return HasSurroundingBlockCircle(x, y, z, xChunkCount, yChunkCount, zChunkCount, map, blockType, distance, negative, countEdge, xDirection, yDirection, zDirection);
+        }
+    }
+
+    public static bool HasSurroundingBlockSquare(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
+    int distance = 1, bool negative = false, bool countEdge = true,
+    bool xDirection = true, bool yDirection = true, bool zDirection = true)
+    {
+        for (int xd = (xDirection ? -distance : 0); xd <= (xDirection ? distance : 0); xd++)
+            for (int yd = (yDirection ? -distance : 0); yd <= (yDirection ? distance : 0); yd++)
+                for (int zd = (zDirection ? -distance : 0); zd <= (zDirection ? distance : 0); zd++)
+                {
+                    if (xd != 0 || yd != 0 || zd != 0)
+                    {
+                        int xi = x + xd;
+                        int yj = y + yd;
+                        int zk = z + zd;
+                        if (xi < xChunkCount * World.chunkSize && xi >= 0 &&
+                            yj < yChunkCount * World.chunkSize && yj >= 0 &&
+                            zk < zChunkCount * World.chunkSize && zk >= 0)
+                        {
+                            if (map[xi, yj, zk] == blockType)
+                            {
+                                return true;
+                            }
+                        }
+                        else if (countEdge)
+                        {
+                            return true; ;
+                        }
+                    }
+                }
+        return false;
+    }
+
     public static bool HasSurroundingBlockCircle(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType, 
         int distance = 1, bool negative = false, bool countEdge = true, 
         bool xDirection = true, bool yDirection = true, bool zDirection = true)
@@ -440,4 +514,9 @@ public class Ruleset
         }
         return false;
     }
+}
+
+public enum NeighborType
+{
+    SQUARE, DIRECT, CIRCLE
 }
