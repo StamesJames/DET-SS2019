@@ -75,9 +75,95 @@ public static class AutomatonUtilities
         return blockCount;
     }
 
-    public static bool HasSurroundingBlockDirect(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
+    public static bool HasSurroundingBlockAllDirections(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
     int distance = 1, bool negative = false, bool countEdge = true,
     bool xDirection = true, bool yDirection = true, bool zDirection = true)
+    {
+        bool inXpos = !xDirection;
+        bool inYpos = !yDirection;
+        bool inZpos = !zDirection;
+        bool inXneg = !xDirection;
+        bool inYneg = !yDirection;
+        bool inZneg = !zDirection;
+        for (int d = -distance; d <= distance; d++)
+        {
+            if (d != 0)
+            {
+                int xi = x + (xDirection ? d : 0);
+                int yj = y + (yDirection ? d : 0);
+                int zk = z + (zDirection ? d : 0);
+                if (xi < xChunkCount * World.chunkSize && xi >= 0 && xDirection)
+                {
+                    if (map[xi, y, z] == blockType)
+                    {
+                        if (d > 0) inXpos = true;
+                        else inXneg = true;
+
+                    }
+                }
+                else if (countEdge && xDirection)
+                {
+                    if (d > 0) inXpos = true;
+                    else inXneg = true;
+                }
+                if (yj < yChunkCount * World.chunkSize && yj >= 0 && yDirection)
+                {
+                    if (map[x, yj, z] == blockType)
+                    {
+                        if (d > 0) inYpos = true;
+                        else inYneg = true;
+                    }
+                }
+                else if (countEdge && yDirection)
+                {
+                    if (d > 0) inYpos = true;
+                    else inYneg = true;
+                }
+                if (zk < zChunkCount * World.chunkSize && zk >= 0 && zDirection)
+                {
+                    if (map[x, y, zk] == blockType)
+                    {
+                        if (d > 0) inZpos = true;
+                        else inZneg = true;
+                    }
+                }
+                else if (countEdge && zDirection)
+                {
+                    if (d > 0) inZpos = true;
+                    else inZneg = true;
+                }
+            }
+        }
+        return inXpos && inYpos && inZpos && inXneg && inYneg && inZneg;
+    }
+
+    public static bool IsBetweenBlock(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
+        int distance = 1, bool negative = false, bool countEdge = true,
+        bool xDirection = true, bool yDirection = true, bool zDirection = true)
+    {
+        int xpos = xDirection ? distance + 10 : 0;
+        int ypos = yDirection ? distance + 10 : 0;
+        int zpos = zDirection ? distance + 10 : 0;
+        int xneg = xDirection ? distance + 10 : 0;
+        int yneg = yDirection ? distance + 10 : 0;
+        int zneg = zDirection ? distance + 10 : 0;
+        for (int d = 1; d < distance; d++)
+        {
+            if ( x + d < xChunkCount * World.chunkSize && xpos > distance && map[x + d, y, z] == blockType) xpos = d;
+            if ( x - d >= 0 && xneg > distance && map[x - d, y, z] == blockType) xneg = d;
+            if ( y + d < yChunkCount * World.chunkSize && ypos > distance && map[x, y + d, z] == blockType) ypos = d;
+            if ( y - d >= 0 && yneg > distance && map[x, y - d, z] == blockType) yneg = d;
+            if ( z + d < zChunkCount * World.chunkSize && zpos > distance && map[x, y, z + d] == blockType) zpos = d;
+            if ( z - d >= 0 && zneg > distance && map[x, y, z - d] == blockType) zneg = d;
+        }
+
+
+        return (xpos + xneg <= distance) && (ypos + yneg <= distance) && (zpos + zneg <= distance);
+    }
+
+    public static bool HasSurroundingBlockDirect(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
+        int distance = 1, bool negative = false, bool countEdge = true,
+        bool xDirection = true, bool yDirection = true, bool zDirection = true)
     {
         for (int d = -distance; d <= distance; d++)
         {
@@ -124,9 +210,84 @@ public static class AutomatonUtilities
         return false;
     }
 
-    public static bool HasSurroundingBlockCircle(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType, 
-    int distance = 1, bool negative = false, bool countEdge = true, 
+    public static int[] CurveParser(string curveString)
+    {
+        List<int> curveArray = new List<int>();
+
+        string[] curveStringArray = curveString.Split('/');
+        for (int i = 0; i < curveStringArray.Length; i++)
+        {
+            Debug.Log(curveStringArray[i]);
+            try
+            {
+                curveArray.Add(int.Parse(curveStringArray[i]));
+            }
+            catch(FormatException e)
+            {
+                Debug.Log("konnte \"" + curveStringArray[i] + "\" nicht Parsen Exeption " + e.GetType());
+            }
+            
+        }
+
+        return curveArray.ToArray();
+    }
+
+    public static bool HasSurroundingBlock(NeighborType neighborType,int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
+        int distance = 1, bool negative = false, bool countEdge = true,
+        bool xDirection = true, bool yDirection = true, bool zDirection = true)
+    {
+        if (neighborType == NeighborType.CIRCLE)
+        {
+            return HasSurroundingBlockCircle(x, y, z, xChunkCount, yChunkCount, zChunkCount, map, blockType, distance, negative, countEdge, xDirection, yDirection, zDirection);
+        }
+        else if (neighborType == NeighborType.SQUARE)
+        {
+            return HasSurroundingBlockSquare(x, y, z, xChunkCount, yChunkCount, zChunkCount, map, blockType, distance, negative, countEdge, xDirection, yDirection, zDirection);
+        }
+        else if (neighborType == NeighborType.DIRECT)
+        {
+            return HasSurroundingBlockDirect(x, y, z, xChunkCount, yChunkCount, zChunkCount, map, blockType, distance, negative, countEdge, xDirection, yDirection, zDirection);
+        }
+        else
+        {
+            return HasSurroundingBlockCircle(x, y, z, xChunkCount, yChunkCount, zChunkCount, map, blockType, distance, negative, countEdge, xDirection, yDirection, zDirection);
+        }
+    }
+
+    public static bool HasSurroundingBlockSquare(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType,
+    int distance = 1, bool negative = false, bool countEdge = true,
     bool xDirection = true, bool yDirection = true, bool zDirection = true)
+    {
+        for (int xd = (xDirection ? -distance : 0); xd <= (xDirection ? distance : 0); xd++)
+            for (int yd = (yDirection ? -distance : 0); yd <= (yDirection ? distance : 0); yd++)
+                for (int zd = (zDirection ? -distance : 0); zd <= (zDirection ? distance : 0); zd++)
+                {
+                    if (xd != 0 || yd != 0 || zd != 0)
+                    {
+                        int xi = x + xd;
+                        int yj = y + yd;
+                        int zk = z + zd;
+                        if (xi < xChunkCount * World.chunkSize && xi >= 0 &&
+                            yj < yChunkCount * World.chunkSize && yj >= 0 &&
+                            zk < zChunkCount * World.chunkSize && zk >= 0)
+                        {
+                            if (map[xi, yj, zk] == blockType)
+                            {
+                                return true;
+                            }
+                        }
+                        else if (countEdge)
+                        {
+                            return true; ;
+                        }
+                    }
+                }
+        return false;
+    }
+
+    public static bool HasSurroundingBlockCircle(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType, 
+        int distance = 1, bool negative = false, bool countEdge = true, 
+        bool xDirection = true, bool yDirection = true, bool zDirection = true)
     {
         for (int xd = ( xDirection ? -distance : 0 ); xd <= ( xDirection ? distance : 0 ); xd++)
             for (int yd = (yDirection ? -distance : 0); yd <= (yDirection ? distance : 0); yd++)
@@ -159,8 +320,8 @@ public static class AutomatonUtilities
     }
 
     public static int CountSurroundingBlocksCircle(int x, int y, int z, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, Block.BlockType blockType, 
-    int distance = 1, bool negative = false, bool countEdge = true, 
-    bool xDirection = true, bool yDirection = true, bool zDirection = true)
+        int distance = 1, bool negative = false, bool countEdge = true, 
+        bool xDirection = true, bool yDirection = true, bool zDirection = true)
     {
         int blockCount = 0;
         for (int xd = ( xDirection ? -distance : 0 ); xd <= ( xDirection ? distance : 0 ); xd++)
@@ -244,10 +405,9 @@ public static class AutomatonUtilities
     }
 
     public static Block.BlockType[,,] SpawnBlocksRandomly(Block.BlockType whatToSpawn, float spawnRate, int xChunkCount, int yChunkCount, int zChunkCount, Block.BlockType[,,] map, 
-        Func<int, int, int, bool> spawnPredicate)
+        Func<int, int, int, bool> spawnPredicate, System.Random pseudoRandom)
     {
         Block.BlockType[,,] newMap = new Block.BlockType[xChunkCount * World.chunkSize, yChunkCount * World.chunkSize, zChunkCount * World.chunkSize];
-        System.Random pseudoRandom = new System.Random();
         for (int x = 0; x < xChunkCount * World.chunkSize; x++)
             for (int y = 0; y < yChunkCount * World.chunkSize; y++)
                 for (int z = 0; z < zChunkCount * World.chunkSize; z++)
@@ -295,8 +455,11 @@ public class Intervall
 [System.Serializable]
 public class Ruleset
 {
+    string name = "";
+    public string Name { get => name; }
     Intervall[] birthRules;
     Intervall[] deathRules;
+
 
     public Ruleset(Intervall[] pBirthrules, Intervall[] pDeathRules)
     {
@@ -304,9 +467,16 @@ public class Ruleset
         this.deathRules = pDeathRules;
     }
 
+    public Ruleset(Intervall[] pBirthrules, Intervall[] pDeathRules, string pName)
+    {
+        this.name = pName;
+        this.birthRules = pBirthrules;
+        this.deathRules = pDeathRules;
+    }
+
     public override string ToString()
     {
-        string name = "";
+        string fullName = "";
         string birthRulesString = "";
         string deathRulesString = "";
         for (int i = 0; i < birthRules.Length; i++)
@@ -327,9 +497,9 @@ public class Ruleset
             }
         }
 
-        name = birthRulesString + "/" + deathRulesString;
+        fullName = birthRulesString + "/" + deathRulesString + ((name != "") ? "  \"" + name + "\"" : "" );
 
-        return name;
+        return fullName;
     }
 
     public bool checkBirth(int count)
@@ -355,4 +525,9 @@ public class Ruleset
         }
         return false;
     }
+}
+
+public enum NeighborType
+{
+    SQUARE, DIRECT, CIRCLE
 }
