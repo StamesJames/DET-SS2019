@@ -45,8 +45,8 @@ public class FlatMapHolder : MapGeneratorHolder
 
 
     private Ruleset[] rules = new Ruleset[]{
-        new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 3) }),
-        new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 4) })};
+        new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 3) }, "Rounded Cave"),
+        new Ruleset(new Intervall[] { new Intervall(5, 8) }, new Intervall[] { new Intervall(0, 4) }, "Straight Cave")};
 
     private FlatCaveMap generator = new FlatCaveMap();
 
@@ -71,7 +71,7 @@ public class FlatMapHolder : MapGeneratorHolder
         celingNeighborTypeDropdown.onValueChanged.AddListener((index) => generator.CelingNeighbortype = (NeighborType) index);
         celingCurveInput.onValueChanged.AddListener((input) => generator.CelingCurve = AutomatonUtilities.CurveParser(input));
         groundNeighborTypeDropdown.onValueChanged.AddListener((index) => generator.GroundNeighbortype = (NeighborType)index);
-        groundCurveInput.onValueChanged.AddListener((input) => generator.CelingCurve = AutomatonUtilities.CurveParser(input));
+        groundCurveInput.onValueChanged.AddListener((input) => generator.GroundCurve = AutomatonUtilities.CurveParser(input));
 
 
         // Wood

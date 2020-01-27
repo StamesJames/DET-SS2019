@@ -222,10 +222,11 @@ public static class AutomatonUtilities
             {
                 curveArray.Add(int.Parse(curveStringArray[i]));
             }
-            catch
+            catch(FormatException e)
             {
-                Debug.Log("konnte \"" + curveStringArray[i] + "\" nicht Parsen");
+                Debug.Log("konnte \"" + curveStringArray[i] + "\" nicht Parsen Exeption " + e.GetType());
             }
+            
         }
 
         return curveArray.ToArray();
@@ -454,8 +455,11 @@ public class Intervall
 [System.Serializable]
 public class Ruleset
 {
+    string name = "";
+    public string Name { get => name; }
     Intervall[] birthRules;
     Intervall[] deathRules;
+
 
     public Ruleset(Intervall[] pBirthrules, Intervall[] pDeathRules)
     {
@@ -463,9 +467,16 @@ public class Ruleset
         this.deathRules = pDeathRules;
     }
 
+    public Ruleset(Intervall[] pBirthrules, Intervall[] pDeathRules, string pName)
+    {
+        this.name = pName;
+        this.birthRules = pBirthrules;
+        this.deathRules = pDeathRules;
+    }
+
     public override string ToString()
     {
-        string name = "";
+        string fullName = "";
         string birthRulesString = "";
         string deathRulesString = "";
         for (int i = 0; i < birthRules.Length; i++)
@@ -486,9 +497,9 @@ public class Ruleset
             }
         }
 
-        name = birthRulesString + "/" + deathRulesString;
+        fullName = birthRulesString + "/" + deathRulesString + ((name != "") ? "  \"" + name + "\"" : "" );
 
-        return name;
+        return fullName;
     }
 
     public bool checkBirth(int count)

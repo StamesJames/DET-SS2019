@@ -87,7 +87,7 @@ public class FlatCaveMap : MapGenerator
         // Dach und Boden erzeugen
         PutGroundRoof();
         CreateCelingCurve(celingCurve);
-        //CreateGroundCurve(groundCurve);
+        CreateGroundCurve(groundCurve);
 
         // Wände Aufrauen
         for (int i = 0; i < RoughnessIterations; i++) RoughenitUp();
@@ -312,7 +312,7 @@ public class FlatCaveMap : MapGenerator
                             Block.BlockType.STONE : currentBlockMap[x, y, z];
                 }
         }
-        for (int y = 0; y < World.chunkSize * YChunkCount - distanceArray.Length - 1; y++)
+        for (int y = distanceArray.Length + 1; y < World.chunkSize * YChunkCount; y++)
             for (int x = 0; x < xChunkCount * World.chunkSize; x++)
                 for (int z = 0; z < zChunkCount * World.chunkSize; z++)
                 {
@@ -321,7 +321,7 @@ public class FlatCaveMap : MapGenerator
         for (int x = 0; x < xChunkCount * World.chunkSize; x++)
             for (int z = 0; z < zChunkCount * World.chunkSize; z++)
             {
-                newMap[x, World.chunkSize * YChunkCount - 1, z] = currentBlockMap[x, World.chunkSize * YChunkCount - 1, z];
+                newMap[x, 0, z] = currentBlockMap[x, 0, z];
             }
         currentBlockMap = newMap;
     }
